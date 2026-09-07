@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>扫楼打分本 · 城中村看房实时评分对比</title>
+<style>
+  :root{
+    --canvas:#ffffff; --subtle:#f6f8fa;
+    --fg:#1f2328; --muted:#59636e; --faint:#818b98;
+    --border:#d1d9e0; --border-muted:#eaeef2;
+    --accent:#0969da; --accent-sub:#ddf4ff;
+    --success:#1a7f37; --success-em:#1f883d; --success-sub:#dafbe1; --success-deep:#116329;
+    --attention:#9a6700; --attention-sub:#fff8c5;
+    --danger:#cf222e; --danger-sub:#ffebe9;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --shadow:0 1px 0 rgba(31,35,40,.04);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--canvas);color:var(--fg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,"Microsoft YaHei",sans-serif;
+    font-size:15px;line-height:1.5;overflow-x:hidden;
+  }
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;font-size:15px;color:var(--fg);}
+  .app{max-width:920px;margin:0 auto;padding:0 14px 90px;}
+
+  /* ===== 全局导航（深色条） ===== */
+  .gh-top{
+    position:sticky;top:0;z-index:30;background:#24292f;color:#fff;
+    margin:0 calc(50% - 50vw);padding:10px calc(50vw - 50% + 14px);
+  }
+  .gh-top-in{max-width:892px;margin:0 auto;display:flex;align-items:center;gap:10px;}
+  .brand{display:flex;align-items:center;gap:8px;flex:1;min-width:0;}
+  .brand svg{flex:0 0 auto;color:#fff;opacity:.92;}
+  .brand h1{font-size:15px;font-weight:600;margin:0;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .edit-title{flex:1;min-width:0;text-align:center;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  /* ===== 按钮（Primer） ===== */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    border:1px solid var(--border);border-radius:6px;background:var(--subtle);color:var(--fg);
+    padding:0 14px;min-height:40px;font-size:14px;font-weight:500;
+    transition:background-color .15s,border-color .15s;white-space:nowrap;
+  }
+  .btn:hover{background:#eef1f4;}
+  .btn:active{background:#e6eaef;}
+  .btn-primary{background:var(--success-em);border-color:rgba(31,35,40,.15);color:#fff;}
+  .btn-primary:hover{background:var(--success);border-color:rgba(31,35,40,.15);}
+  .btn-primary:active{background:#176f31;}
+  .btn-danger{color:var(--danger);}
+  .btn-danger:hover{background:var(--danger-sub);border-color:rgba(207,34,46,.4);}
+  .btn-dark{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.28);color:#fff;}
+  .btn-dark:hover{background:rgba(255,255,255,.2);}
+  .btn-sm{min-height:36px;padding:0 11px;font-size:12.5px;}
+  .btn.block{width:100%;}
+  .btn:focus-visible,.chip:focus-visible,.seg button:focus-visible{
+    outline:none;box-shadow:0 0 0 3px rgba(9,105,218,.35);
+  }
+
+  /* ===== Box 组件 ===== */
+  .box{background:var(--canvas);border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow);}
+  .box-head{
+    display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--subtle);
+    border-bottom:1px solid var(--border);font-size:13px;font-weight:600;border-radius:6px 6px 0 0;
+  }
+  .box-head .hint{margin-left:auto;font-weight:400;font-size:11.5px;color:var(--faint);text-align:right;}
+  .box-body{padding:14px;}
+  .box-foot{
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+    padding:10px 14px;border-top:1px solid var(--border-muted);border-radius:0 0 6px 6px;
+  }
+
+  /* ===== Label / Counter ===== */
+  .label{
+    display:inline-flex;align-items:center;padding:0 8px;height:20px;
+    font-size:11px;font-weight:500;line-height:1;border-radius:1em;white-space:nowrap;
+  }
+  .lb-success{background:var(--success-sub);color:var(--success-deep);}
+  .lb-accent{background:var(--accent-sub);color:var(--accent);}
+  .lb-attention{background:var(--attention-sub);color:var(--attention);}
+  .lb-danger{background:var(--danger-sub);color:var(--danger);}
+  .counter{
+    display:inline-flex;align-items:center;padding:0 9px;height:20px;
+    font-size:11px;font-weight:600;line-height:1;border-radius:1em;
+    background:rgba(175,184,193,.25);color:var(--fg);font-family:var(--mono);letter-spacing:.5px;
+  }
+
+  /* ===== 列表视图 ===== */
+  .repo-desc{font-size:12.5px;color:var(--muted);margin:0 0 12px;}
+  .stats{display:flex;margin-bottom:13px;}
+  .stat{flex:1;min-width:0;padding:12px 16px;}
+  .stat + .stat{border-left:1px solid var(--border-muted);}
+  .stat .n{font-size:22px;font-weight:700;line-height:1.1;}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:3px;}
+
+  details.rules{margin-bottom:13px;}
+  details.rules summary{
+    cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;
+    padding:10px 14px;font-size:13px;font-weight:500;color:var(--muted);border-radius:6px;
+  }
+  details.rules summary::-webkit-details-marker{display:none;}
+  details.rules summary .chev{color:var(--faint);transition:transform .15s;flex:0 0 auto;}
+  details.rules[open] summary .chev{transform:rotate(180deg);}
+  details.rules[open] summary{border-bottom:1px solid var(--border-muted);border-radius:6px 6px 0 0;}
+  details.rules .rb{padding:12px 16px;font-size:12.8px;color:var(--muted);line-height:1.9;}
+  details.rules .rb b{color:var(--fg);}
+
+  .flat{margin-bottom:12px;}
+  .flat.best{border-color:var(--success);}
+  .flat.best .box-head{border-radius:5px 5px 0 0;}
+  .flat-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .flat-head .score{font-size:20px;font-weight:700;}
+  .flat-head .score .of{font-size:11.5px;color:var(--faint);font-weight:400;margin-left:1px;}
+  .flat-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:15.5px;font-weight:600;line-height:1.4;}
+  .flat-name{cursor:pointer;display:inline-flex;align-items:baseline;gap:4px;min-width:0;}
+  .flat-name .pen{color:var(--faint);flex:0 0 auto;transform:translateY(1px);}
+  .flat-name:hover{color:var(--accent);}
+  .meta{font-size:12.5px;color:var(--muted);margin-top:5px;word-break:break-all;}
+
+  /* 得分构成条（语言条式） */
+  .segbar{display:flex;height:10px;border-radius:6px;overflow:hidden;background:rgba(175,184,193,.3);margin-top:13px;}
+  .segbar span{display:block;height:100%;}
+  .legend{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-top:10px;}
+  .lg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);min-width:0;}
+  .lg .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+  .lg .val{margin-left:auto;font-size:12px;color:var(--fg);}
+  .lg .val em{font-style:normal;color:var(--faint);}
+
+  .warns{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
+  .cost{font-size:13px;font-weight:700;}
+  .cost.in{color:var(--success);} .cost.over{color:var(--danger);}
+  .cost2{font-size:12px;color:var(--muted);}
+  .acts{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;}
+
+  .blankslate{padding:44px 24px;text-align:center;}
+  .blankslate h3{margin:12px 0 6px;font-size:16px;font-weight:600;}
+  .blankslate p{margin:0 0 16px;font-size:13.5px;color:var(--muted);line-height:1.7;}
+  .foot{margin:28px 0 6px;text-align:center;font-size:12px;color:var(--faint);line-height:1.8;}
+
+  /* ===== 编辑视图 ===== */
+  .edit-grid{display:flex;gap:14px;align-items:flex-start;}
+  .edit-main{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:13px;}
+  .live-panel{flex:0 0 300px;position:sticky;top:72px;display:flex;flex-direction:column;gap:12px;}
+
+  .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field.full{grid-column:1/-1;}
+  .field label{font-size:13px;font-weight:600;color:var(--fg);}
+  .field input,.field select,.field textarea{
+    border:1px solid var(--border);border-radius:6px;padding:8px 12px;min-height:42px;
+    background:var(--subtle);width:100%;outline:none;transition:background-color .15s,border-color .15s,box-shadow .15s;
+  }
+  .field textarea{min-height:64px;resize:vertical;line-height:1.6;}
+  .field input:focus,.field select:focus,.field textarea:focus{
+    background:#fff;border-color:var(--accent);box-shadow:0 0 0 3px rgba(9,105,218,.3);
+  }
+  .with-unit{position:relative;}
+  .with-unit input{padding-right:46px;}
+  .with-unit .u{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--faint);pointer-events:none;}
+  .fieldnote{font-size:11.5px;color:var(--faint);margin-top:10px;line-height:1.7;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    border:1px solid var(--border);background:#fff;border-radius:2em;padding:0 13px;
+    min-height:38px;display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);
+    user-select:none;transition:background-color .12s,border-color .12s;
+  }
+  .chip:hover{background:var(--subtle);}
+  .chip .tick{
+    width:16px;height:16px;border:1.5px solid #afb8c1;border-radius:50%;
+    display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:transparent;flex:0 0 auto;
+  }
+  .chip.on{background:var(--success-sub);border-color:var(--success);color:var(--success-deep);font-weight:500;}
+  .chip.on .tick{background:var(--success);border-color:var(--success);color:#fff;}
+  .chip.risk.on{background:var(--danger-sub);border-color:var(--danger);color:var(--danger);}
+  .chip.risk.on .tick{background:var(--danger);border-color:var(--danger);}
+
+  .stars{display:flex;flex-direction:column;gap:11px;}
+  .star-row{display:flex;align-items:center;gap:10px;width:100%;}
+  .star-row .sl{font-size:13px;color:var(--muted);flex:0 0 76px;}
+  .seg{display:flex;gap:4px;flex:1;}
+  .seg button{
+    flex:1;min-height:40px;border:1px solid var(--border);background:var(--subtle);
+    border-radius:6px;font-size:13px;color:var(--muted);transition:background-color .12s;
+  }
+  .seg button:hover{background:#eef1f4;}
+  .seg button.on{background:var(--success-em);border-color:rgba(31,35,40,.15);color:#fff;font-weight:700;}
+
+  /* 实时侧栏 */
+  .score-box{text-align:center;padding:16px;}
+  .score-line{display:flex;align-items:baseline;justify-content:center;gap:6px;}
+  .score-line .n{font-size:46px;font-weight:700;line-height:1;}
+  .score-line .of{font-size:14px;color:var(--muted);}
+  .score-box .g{margin-top:9px;}
+  .progress{height:8px;background:rgba(175,184,193,.3);border-radius:6px;overflow:hidden;margin-top:13px;}
+  .progress span{display:block;height:100%;border-radius:6px;transition:width .25s;}
+
+  .costrows .row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;color:var(--muted);}
+  .costrows .row .v{color:var(--fg);font-weight:600;text-align:right;}
+  .costrows .row.total{border-top:1px dashed var(--border);margin-top:6px;padding-top:10px;font-size:14px;}
+  .costrows .row.total .v{font-size:18px;font-weight:700;}
+  .flash{margin-top:10px;border-radius:6px;padding:8px 12px;font-size:12.5px;font-weight:500;}
+  .flash.in{background:var(--success-sub);color:var(--success-deep);}
+  .flash.over{background:var(--danger-sub);color:var(--danger);}
+
+  .riskline{margin-top:10px;font-size:12px;font-weight:700;color:var(--danger);}
+  .live-warn{display:flex;flex-wrap:wrap;gap:6px;}
+  .muted2{color:var(--faint);font-size:12.5px;}
+  .save-bar{display:flex;gap:9px;}
+
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(16px);
+    background:#24292f;color:#fff;padding:10px 18px;border-radius:6px;font-size:13px;
+    opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:86vw;
+    box-shadow:0 8px 24px rgba(31,35,40,.25);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;}
+  }
+  /* ===== 移动端 ===== */
+  @media (max-width:760px){
+    .app{padding:0 11px 96px;}
+    .gh-top{padding:9px calc(50vw - 50% + 11px);}
+    .edit-grid{flex-direction:column;}
+    .live-panel{flex:1 1 auto;width:100%;position:static;order:-1;}
+    .stat{padding:11px 12px;}
+    .stat .n{font-size:20px;}
+    .acts{margin-left:0;width:100%;}
+    .acts .btn{flex:1;}
+    .legend{gap:5px 12px;}
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ================= 数据字典 ================= */
+  var FEATURES = [
+    ["ac","空调"],["ac1","一级能效"],["heater","热水器"],["bed","床/床垫"],["wardrobe","衣柜"],
+    ["desk","桌椅"],["fridge","冰箱"],["washer","洗衣机"],["cook","可做饭"],["bath","独立卫浴"],
+    ["balcony","阳台"],["light","采光好"],["vent","通风对流"],["water","水压足"],["signal","信号好"],
+    ["wifi","有WiFi"],["noseep","无渗水霉斑"],["socket","插座够用"],["lock","门锁/监控"]
+  ];
+  var RISKS = [
+    ["sublandlord","二房东/公寓公司"],["dark","握手楼暗间"],["topfloor","顶楼西晒"],["groundfloor","一楼潮湿"]
+  ];
+  var SUBJECTS = [["value","性价比"],["light","采光通风"],["quiet","安静安全"],["owner","房东靠谱"]];
+  var HTYPES = ["单间","一房一厅","两房一厅"];
+  var ORIENTS = ["南","北","东","西","东南","西南"];
+  var STORE_KEY = "fs-rent-scorer-v1";
+  var BUDGET = 700;
+  /* 得分构成条配色（对应 5 个评分项） */
+  var SEG = [["租金","#1a7f37"],["通勤","#0969da"],["水电","#8250df"],["硬件","#9a6700"],["印象","#bf3989"]];
+  var WLB = {r:"danger",a:"attention",g:"success"};
+  var PEN = '<svg class="pen" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M11.3 2.3a1.6 1.6 0 0 1 2.3 2.3L5.4 12.8l-3.1.9.9-3.1 8.1-8.3z"/></svg>';
+  var HOUSE = function(size,color){ return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16" fill="'+(color||"currentColor")+'" aria-hidden="true"><path d="M8 1.2 1.2 7.4h2V14h3.6V9.3h2.4V14h3.6V7.4h2L8 1.2z"/></svg>'; };
+  var CHEV = '<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4.2 5.7 8 9.5l3.8-3.8 1.1 1.1L8 11.7 3.1 6.8z"/></svg>';
+
+  /* ================= 状态 ================= */
+  var state = { flats: [] };
+  try{ var raw = localStorage.getItem(STORE_KEY); if(raw){ state = JSON.parse(raw); } }catch(e){ state = {flats:[]}; }
+  function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
+  function uid(){ return "f" + Date.now().toString(36) + Math.floor(Math.random()*999); }
+
+  function blankFlat(){
+    var feats = {}; FEATURES.forEach(function(f){ feats[f[0]] = false; });
+    var risks = {}; RISKS.forEach(function(r){ risks[r[0]] = false; });
+    var sc = {}; SUBJECTS.forEach(function(s){ sc[s[0]] = 0; });
+    return {
+      id:uid(), createdAt:Date.now(),
+      title:"", village:"", addr:"", phone:"", htype:"单间", area:"", floor:"", totalFloor:"", lift:false,
+      orient:"南", roadside:"巷内", commuteMin:"",
+      rent:"", deposit:1, pay:1, ePrice:"", wPrice:"", sharedFee:"", netFee:"", eKwh:120, wTon:4,
+      features:feats, risks:risks, scores:sc, note:""
+    };
+  }
+
+  /* ================= 算分（规则透明，见页面说明） ================= */
+  function calc(f){
+    var rent = Number(f.rent)||0, ep = Number(f.ePrice)||0, wp = Number(f.wPrice)||0;
+    var commute = Number(f.commuteMin)||0;
+    // 1) 租金分 25：450及以下满分，1000及以上≈5
+    var rentScore = rent<=0 ? 0 : Math.max(5, Math.min(25, 25 - Math.max(0,rent-450)/550*20));
+    // 2) 通勤分 10：10分钟内满分，30分钟以上≈3；未填按6中性
+    var commuteScore = commute<=0 ? 6 : Math.max(3, Math.min(10, 10 - Math.max(0,commute-10)/20*7));
+    // 3) 水电合理度 10（电占70% 水占30%）
+    var eS = ep<=0?6:(ep<=0.65?10:ep<=0.9?7:ep<=1.2?4:1);
+    var wS = wp<=0?6:(wp<=3.5?10:wp<=5?6:2);
+    var utilScore = eS*0.7 + wS*0.3;
+    // 4) 硬件齐全度 25
+    var got = FEATURES.filter(function(x){return f.features[x[0]];}).length;
+    var featScore = got/FEATURES.length*25;
+    // 5) 主观评分 30
+    var sv = SUBJECTS.map(function(s){return Number(f.scores[s[0]])||0;});
+    var subjScore = (sv.reduce(function(a,b){return a+b;},0)/(SUBJECTS.length*5))*30;
+    // 风险扣分
+    var riskPenalty = (f.risks.sublandlord?8:0)+(f.risks.dark?8:0)+(f.risks.topfloor?5:0)+(f.risks.groundfloor?5:0)+(ep>=1.2?6:0);
+    var score = Math.max(0, Math.round(rentScore+commuteScore+utilScore+featScore+subjScore-riskPenalty));
+
+    var monthCost = rent + ep*(Number(f.eKwh)||0) + wp*(Number(f.wTon)||0) + (Number(f.sharedFee)||0) + (Number(f.netFee)||0);
+    var warnings = [];
+    if(ep>=1.2) warnings.push(["r","电费 "+ep+" 元/度，明显加价"]);
+    else if(ep>0 && ep>0.65) warnings.push(["a","电费高于民用一档"]);
+    if(wp>5) warnings.push(["r","水费 "+wp+" 元/吨偏高"]);
+    if(f.risks.sublandlord) warnings.push(["r","二房东，需查授权"]);
+    if(f.risks.dark) warnings.push(["a","暗间，白天也要开灯"]);
+    if(f.risks.topfloor) warnings.push(["a","顶楼注意西晒漏水"]);
+    if(f.risks.groundfloor) warnings.push(["a","一楼注意潮湿水浸"]);
+    if(rent>BUDGET) warnings.push(["r","月租超 "+BUDGET+" 预算"]);
+    if(!warnings.length && rent>0) warnings.push(["g","未发现明显硬伤"]);
+
+    return {
+      score:score, monthCost:Math.round(monthCost),
+      parts:{rent:rentScore,commute:commuteScore,util:utilScore,feat:featScore,subj:subjScore,risk:riskPenalty},
+      got:got, total:FEATURES.length, warnings:warnings, budgetOver:rent>BUDGET
+    };
+  }
+  function grade(s){ if(s>=80)return "优先定这套"; if(s>=68)return "值得复看"; if(s>=55)return "一般，备选"; return "建议放弃"; }
+  function gradeColor(s){ if(s>=80)return "#1a7f37"; if(s>=68)return "#0969da"; if(s>=55)return "#9a6700"; return "#cf222e"; }
+  function gradeLabel(s){ if(s>=80)return "lb-success"; if(s>=68)return "lb-accent"; if(s>=55)return "lb-attention"; return "lb-danger"; }
+  function segParts(r,dec){
+    var parts=[["租金",r.parts.rent,25],["通勤",r.parts.commute,10],["水电",r.parts.util,10],["硬件",r.parts.feat,25],["印象",r.parts.subj,30]];
+    return SEG.map(function(s,i){
+      return {name:s[0],color:s[1],v:parts[i][1],max:parts[i][2]};
+    });
+  }
+
+  /* ================= 工具 ================= */
+  function $(s,r){return (r||document).querySelector(s);}
+  function esc(t){return String(t==null?"":t).replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m];});}
+  var toastTimer;
+  function toast(msg){ var t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(function(){t.classList.remove("show");},1900); }
+
+  /* ================= 路由 ================= */
+  function go(hash){ location.hash = hash; }
+  function currentRoute(){
+    var h = location.hash||"#list";
+    var m = h.match(/edit(?:\?id=(.+))?/);
+    if(m){ return {view:"edit", id:m[1]?decodeURIComponent(m[1]):null}; }
+    return {view:"list"};
+  }
+  window.addEventListener("hashchange", render);
+
+  /* ================= 视图：列表 ================= */
+  function renderList(){
+    var flats = state.flats.slice().sort(function(a,b){return calc(b).score-calc(a).score;});
+    var inBudget = flats.filter(function(f){return (Number(f.rent)||0)<=BUDGET && Number(f.rent)>0;}).length;
+    var app=$("#app");
+    var html = ''
+      + '<header class="gh-top"><div class="gh-top-in">'
+      +   '<div class="brand">'+HOUSE(18)+'<h1>扫楼打分本</h1></div>'
+      +   '<button class="btn btn-primary" id="addBtn">＋ 添加本次看房</button>'
+      + '</div></header>'
+      + '<div class="repo-desc">城中村看房实时评分对比 · 数据保存在本机浏览器，不上传服务器</div>'
+      + '<div class="box stats">'
+      +   '<div class="stat"><div class="n mono">'+flats.length+'</div><div class="l">已看房（套）</div></div>'
+      +   '<div class="stat"><div class="n mono" style="color:var(--success)">'+inBudget+'</div><div class="l">月租 ≤ '+BUDGET+' 元</div></div>'
+      +   (flats.length? '<div class="stat"><div class="n mono" style="color:'+gradeColor(calc(flats[0]).score)+'">'+calc(flats[0]).score+'</div><div class="l">当前最高分</div></div>'
+                       : '<div class="stat"><div class="n mono">—</div><div class="l">当前最高分</div></div>')
+      + '</div>'
+      + '<details class="box rules"><summary>'+CHEV+'打分规则与使用说明</summary><div class="rb">'
+      +   '每看一套房就录一张卡，边问边填，<b>分数实时计算、自动保存在本手机浏览器</b>，回到列表按综合分自动排名。满分 100：<b>租金 25 分</b>（450 元内满分、越贵越低）、<b>通勤 10 分</b>（骑车 10 分钟内满分）、<b>水电合理度 10 分</b>（民用电 0.59–0.65 元/度满分，1.2 元以上近乎 0 分并自动扣分）、<b>硬件齐全度 25 分</b>（19 项硬件勾选占比）、<b>主观印象 30 分</b>（4 项各 1–5 分）；<b>风险项扣分</b>：二房东/暗间各 −8，顶楼/一楼各 −5，电费超 1.2 再 −6。月总成本＝月租＋电单价×预估用电＋水单价×预估用水＋公摊＋网费。'
+      + '</div></details>';
+
+    if(!flats.length){
+      html += '<div class="box blankslate">'
+        + HOUSE(48,"#818b98")
+        + '<h3>还没有看房记录</h3>'
+        + '<p>进村看完第一套房，点右上角「添加本次看房」。<br>边问房东边勾选，分数当场出来。</p>'
+        + '<button class="btn btn-primary" id="addBtn2">＋ 添加本次看房</button>'
+        + '</div>'
+        + '<div class="foot">评分与数据只保存在本机浏览器（localStorage）<br>换手机或清除浏览器数据不会同步</div>';
+    }else{
+      flats.forEach(function(f,i){
+        var r = calc(f);
+        var meta = [];
+        if(f.title && f.village) meta.push(esc(f.village));
+        if(f.htype) meta.push(esc(f.htype));
+        if(f.area) meta.push(esc(f.area)+'㎡');
+        if(f.floor||f.totalFloor) meta.push((f.floor||"?")+"/"+(f.totalFloor||"?")+"层"+(f.lift?"·电梯":"·步梯"));
+        if(f.commuteMin) meta.push("骑车 "+esc(f.commuteMin)+" 分");
+        var segs = segParts(r);
+        html += '<div class="box flat'+(i===0?' best':'')+'">'
+          + '<div class="box-head flat-head">'
+          +   (i===0? '<span class="label lb-success">当前最优选</span>' : '<span class="counter">NO.'+(i+1)+'</span>')
+          +   '<span class="score mono" style="color:'+gradeColor(r.score)+'">'+r.score+'<span class="of">/100</span></span>'
+          + '</div>'
+          + '<div class="box-body">'
+          +   '<div class="flat-title"><span class="flat-name" data-rename="'+f.id+'">'+(esc(f.title)||esc(f.village)||"<span style='color:var(--faint);font-weight:400;'>未命名</span>")+PEN+'</span><span class="label '+gradeLabel(r.score)+'">'+grade(r.score)+'</span></div>'
+          +   (meta.length? '<div class="meta">'+meta.join(" · ")+'</div>':'')
+          +   (f.addr? '<div class="meta" style="color:var(--faint);">'+esc(f.addr)+'</div>':'')
+          +   '<div class="segbar">'+ segs.map(function(s){
+                return '<span style="width:'+Math.max(0,Math.min(100,s.v)).toFixed(1)+'%;background:'+s.color+'" title="'+s.name+' '+s.v.toFixed(1)+' / '+s.max+'"></span>';
+              }).join("") + '</div>'
+          +   '<div class="legend">'+ segs.map(function(s){
+                return '<span class="lg"><span class="dot" style="background:'+s.color+'"></span>'+s.name+'<span class="val mono">'+s.v.toFixed(0)+'<em>/'+s.max+'</em></span></span>';
+              }).join("") + '</div>'
+          +   (r.warnings.length? '<div class="warns">'+ r.warnings.map(function(w){return '<span class="label lb-'+WLB[w[0]]+'">'+w[1]+'</span>';}).join("") +'</div>' : '')
+          + '</div>'
+          + '<div class="box-foot">'
+          +   '<span class="cost mono '+(r.budgetOver?'over':'in')+'">月租 ¥'+(f.rent||0)+'</span>'
+          +   '<span class="cost2 mono">预估月总成本 ¥'+r.monthCost+'（含水电）</span>'
+          +   '<span class="cost2">硬件 '+r.got+'/'+r.total+'</span>'
+          +   '<div class="acts">'
+          +     '<button class="btn btn-sm" data-edit="'+f.id+'">编辑</button>'
+          +     '<button class="btn btn-sm" data-copy="'+f.id+'">复制摘要</button>'
+          +     '<button class="btn btn-sm btn-danger" data-del="'+f.id+'">删除</button>'
+          +   '</div>'
+          + '</div></div>';
+      });
+      html += '<div class="foot">评分与数据只保存在本机浏览器（localStorage）<br>换手机或清除浏览器数据不会同步</div>';
+    }
+    app.innerHTML = html;
+    $("#addBtn").onclick = function(){ go("#edit"); };
+    var add2=$("#addBtn2"); if(add2) add2.onclick = function(){ go("#edit"); };
+    app.querySelectorAll("[data-edit]").forEach(function(b){ b.onclick=function(){ go("#edit?id="+this.getAttribute("data-edit")); }; });
+    app.querySelectorAll("[data-del]").forEach(function(b){ b.onclick=function(){
+      var id=this.getAttribute("data-del");
+      if(confirm("确定删除这套看房记录？")){ state.flats = state.flats.filter(function(x){return x.id!==id;}); save(); render(); toast("已删除"); }
+    };});
+    app.querySelectorAll("[data-copy]").forEach(function(b){ b.onclick=function(){
+      var f = state.flats.filter(function(x){return x.id===this.getAttribute("data-copy");}.bind(this))[0];
+      if(f){ copySummary(f); }
+    };});
+    app.querySelectorAll("[data-rename]").forEach(function(el){ el.onclick=function(){
+      var id=this.getAttribute("data-rename");
+      var f = state.flats.filter(function(x){return x.id===id;})[0];
+      if(!f) return;
+      var name = prompt("改个自己好认的房名（留空则显示村名）：", f.title||"");
+      if(name===null) return;
+      f.title = name.trim(); save(); render();
+      if(f.title) toast("已改名："+f.title);
+    };});
+  }
+
+  function summaryText(f){
+    var r=calc(f);
+    var L=[];
+    L.push("【看房记录】"+(f.title||f.village||"未命名")+(f.title&&f.village?"（"+f.village+"）":"")+" "+(f.addr||""));
+    L.push(f.htype+" "+(f.area?f.area+"㎡ ":"")+(f.floor?f.floor+"/"+f.totalFloor+"层":"")+(f.lift?" 电梯":" 步梯")+" 骑车"+(f.commuteMin||"?")+"分钟");
+    L.push("月租"+f.rent+"元 | 电"+(f.ePrice||"?")+"元/度 水"+(f.wPrice||"?")+"元/吨 | 预估月总成本"+r.monthCost+"元");
+    L.push("硬件齐全 "+r.got+"/"+r.total+" | 综合评分 "+r.score+"（"+grade(r.score)+"）");
+    if(f.phone) L.push("房东电话："+f.phone);
+    if(f.note) L.push("备注："+f.note);
+    return L.join("\n");
+  }
+  function copySummary(f){
+    var txt=summaryText(f);
+    function ok(){toast("摘要已复制，可粘贴到微信");};
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(ok,function(){fallback();}); }
+    else fallback();
+    function fallback(){
+      var ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select();
+      try{document.execCommand("copy");ok();}catch(e){toast("复制失败，请截图记录");} document.body.removeChild(ta);
+    }
+  }
+
+  /* ================= 视图：编辑 ================= */
+  var editing = null, editIsNew = false;
+  function isBlank(f){
+    return !f.title && !f.village && !f.rent && !f.phone && !f.addr && !f.note
+      && SUBJECTS.every(function(s){return !Number(f.scores[s[0]]);})
+      && FEATURES.every(function(x){return !f.features[x[0]];})
+      && RISKS.every(function(x){return !f.risks[x[0]];});
+  }
+  function dropIfBlankNew(){
+    if(editIsNew && editing && isBlank(editing)){
+      state.flats = state.flats.filter(function(x){return x.id!==editing.id;}); save();
+    }
+  }
+  function renderEdit(id){
+    editing = id ? state.flats.filter(function(f){return f.id===id;})[0] : blankFlat();
+    if(id && !editing){ go("#list"); return; }
+    editIsNew = !id;
+    if(editIsNew){ state.flats.push(editing); save(); }
+    var headName = id ? ("编辑："+(esc(editing.title)||esc(editing.village)||"看房记录")) : "新增看房记录";
+    var app=$("#app");
+    app.innerHTML =
+      '<header class="gh-top"><div class="gh-top-in">'
+      + '<button class="btn btn-dark" id="backBtn">‹ 返回对比</button>'
+      + '<div class="edit-title">'+headName+'</div>'
+      + '<button class="btn btn-primary" id="saveTop">保存</button>'
+      + '</div></header>'
+      + '<div class="edit-grid"><div class="edit-main" id="editMain"></div><div class="live-panel" id="livePanel"></div></div>';
+
+    $("#editMain").innerHTML = formHTML(editing);
+    bindForm();
+    renderLive();
+    $("#backBtn").onclick=function(){ dropIfBlankNew(); go("#list"); };
+    $("#saveTop").onclick=function(){
+      if(editIsNew && isBlank(editing)){ dropIfBlankNew(); toast("内容为空，未保存"); go("#list"); return; }
+      save(); toast("已保存"); go("#list");
+    };
+  }
+
+  function formHTML(f){
+    function numField(key,label,unit,ph){
+      return '<div class="field"><label>'+label+'</label><div class="with-unit"><input type="number" inputmode="decimal" data-k="'+key+'" value="'+esc(f[key])+'" placeholder="'+(ph||"")+'">'+(unit?'<span class="u">'+unit+'</span>':"")+'</div></div>';
+    }
+    var h = '';
+    /* 基本信息 */
+    h += '<section class="box panel"><div class="box-head"><span>基本信息</span><span class="hint">问房东 / 看门牌</span></div><div class="box-body">'
+      + '<div class="field full" style="margin-bottom:12px;"><label>自定义房名（列表标题就是它，也可在列表点房名直接改）</label><input data-k="title" value="'+esc(f.title||"")+'" placeholder="起个好认的名字，如：弼塘西便3楼朝南单间；留空则显示村名"></div>'
+      + '<div class="fgrid">'
+      + '<div class="field"><label>村名 *</label><input data-k="village" value="'+esc(f.village)+'" placeholder="如：弼塘村 / 大沙第南" list="vlist"><datalist id="vlist">'+
+          ["弼塘村","简村村","河宕村","青柯村","莘冈村","海口村","大沙村","古灶村","村头村","村尾村","大富村","白坭村","张槎村","大江村","下朗村","上朗村","莲塘村"].map(function(v){return '<option value="'+v+'">';}).join("")+'</datalist></div>'
+      + '<div class="field"><label>街巷门牌（选填）</label><input data-k="addr" value="'+esc(f.addr)+'" placeholder="如：西便村X巷X号"></div>'
+      + '<div class="field"><label>房东电话（选填）</label><input type="tel" data-k="phone" value="'+esc(f.phone)+'" placeholder="选填，方便回头联系"></div>'
+      + '<div class="field"><label>户型</label><select data-k="htype">'+HTYPES.map(function(x){return '<option '+(f.htype===x?"selected":"")+'>'+x+'</option>';}).join("")+'</select></div>'
+      + numField("area","面积","㎡")
+      + numField("floor","所在楼层","楼")
+      + numField("totalFloor","总楼层","层")
+      + '<div class="field"><label>楼型</label><select data-k="lift"><option value="false" '+(f.lift?"":"selected")+'>步梯</option><option value="true" '+(f.lift?"selected":"")+'>电梯</option></select></div>'
+      + '<div class="field"><label>朝向</label><select data-k="orient">'+ORIENTS.map(function(x){return '<option '+(f.orient===x?"selected":"")+'>'+x+'</option>';}).join("")+'</select></div>'
+      + '<div class="field"><label>位置</label><select data-k="roadside"><option '+(f.roadside==="巷内"?"selected":"")+'>巷内</option><option '+(f.roadside==="路边"?"selected":"")+'>路边</option></select></div>'
+      + numField("commuteMin","到公司骑程","分钟")
+      + '</div></div></section>';
+
+    /* 费用 */
+    h += '<section class="box panel"><div class="box-head"><span>费用明细</span><span class="hint">逐项写死，口头不算</span></div><div class="box-body"><div class="fgrid">'
+      + numField("rent","月租 *","元")
+      + '<div class="field"><label>押金（月数）</label><select data-k="deposit">'+[1,2,3].map(function(n){return '<option value="'+n+'" '+(Number(f.deposit)===n?"selected":"")+'>押'+n+'</option>';}).join("")+'</select></div>'
+      + '<div class="field"><label>付款（月数）</label><select data-k="pay">'+[1,2,3,6,12].map(function(n){return '<option value="'+n+'" '+(Number(f.pay)===n?"selected":"")+'>付'+n+'</option>';}).join("")+'</select></div>'
+      + numField("ePrice","电费单价","元/度")
+      + numField("wPrice","水费单价","元/吨")
+      + numField("eKwh","预估月用电","度")
+      + numField("wTon","预估月用水","吨")
+      + numField("sharedFee","月公摊/卫生费","元")
+      + numField("netFee","月网费","元")
+      + '</div><div class="fieldnote">佛山居民一档电价约 0.59 元/度；城中村常见加价到 1.3–1.5，水费常见 5 元/吨。预估用电默认 120 度（常开空调可调到 180–220）。</div></div></section>';
+
+    /* 硬件 */
+    h += '<section class="box panel"><div class="box-head"><span>屋内硬件</span><span class="hint">现场逐项点选，已勾选 '+FEATURES.filter(function(x){return f.features[x[0]];}).length+'/'+FEATURES.length+'</span></div>'
+      + '<div class="box-body"><div class="chips" id="featChips">'+ FEATURES.map(function(x){
+          return '<button type="button" class="chip'+(f.features[x[0]]?" on":"")+'" data-feat="'+x[0]+'"><span class="tick">✓</span>'+x[1]+'</button>';
+        }).join("") +'</div></div></section>';
+
+    /* 风险 */
+    h += '<section class="box panel"><div class="box-head"><span>风险红线</span><span class="hint">命中就点，自动扣分</span></div>'
+      + '<div class="box-body"><div class="chips">'+ RISKS.map(function(x){
+          return '<button type="button" class="chip risk'+(f.risks[x[0]]?" on":"")+'" data-risk="'+x[0]+'"><span class="tick">!</span>'+x[1]+'</button>';
+        }).join("") +'</div></div></section>';
+
+    /* 主观评分 */
+    h += '<section class="box panel"><div class="box-head"><span>主观印象</span><span class="hint">凭现场感觉，1 差 — 5 好</span></div><div class="box-body"><div class="stars">'
+      + SUBJECTS.map(function(s){
+          return '<div class="star-row"><span class="sl">'+s[1]+'</span><div class="seg" data-score="'+s[0]+'">'
+            + [1,2,3,4,5].map(function(n){return '<button type="button" data-n="'+n+'" class="'+(Number(f.scores[s[0]])===n?"on":"")+'">'+n+'</button>';}).join("")
+            + '</div></div>';
+        }).join("")
+      + '</div></div></section>';
+
+    /* 备注 */
+    h += '<section class="box panel"><div class="box-head"><span>备注</span></div><div class="box-body"><div class="field"><textarea data-k="note" placeholder="砍价空间、顾虑、房东原话、约定复看时间……">'+esc(f.note)+'</textarea></div></div></section>';
+
+    h += '<div class="save-bar"><button class="btn btn-primary block" id="saveBottom">保存并返回对比</button>'
+      + (editing&&(editing.village||editing.title)? '<button class="btn" id="copyBtn">复制本套摘要</button>':'')+'</div>';
+    return h;
+  }
+
+  function bindForm(){
+    var main=$("#editMain");
+    main.addEventListener("input", onInput);
+    main.addEventListener("change", onInput);
+    main.addEventListener("click", function(e){
+      var chip = e.target.closest("[data-feat],[data-risk],[data-score] button");
+      if(!chip) return;
+      if(chip.hasAttribute("data-feat")){
+        var k=chip.getAttribute("data-feat"); editing.features[k]=!editing.features[k]; chip.classList.toggle("on");
+        var got=FEATURES.filter(function(x){return editing.features[x[0]];}).length;
+        var hint=chip.closest(".panel").querySelector(".hint");
+        if(hint){ hint.textContent="现场逐项点选，已勾选 "+got+"/"+FEATURES.length; }
+        refreshAfterChange();
+      }else if(chip.hasAttribute("data-risk")){
+        var rk=chip.getAttribute("data-risk"); editing.risks[rk]=!editing.risks[rk]; chip.classList.toggle("on"); refreshAfterChange();
+      }else if(chip.parentNode.hasAttribute("data-score")){
+        var sk=chip.parentNode.getAttribute("data-score"), n=Number(chip.getAttribute("data-n"));
+        editing.scores[sk]=n;
+        chip.parentNode.querySelectorAll("button").forEach(function(b){b.classList.toggle("on", Number(b.getAttribute("data-n"))===n);});
+        refreshAfterChange();
+      }
+    });
+    function onInput(e){
+      var el=e.target; if(!el.hasAttribute("data-k")) return;
+      var k=el.getAttribute("data-k");
+      if(k==="lift"){ editing.lift = el.value==="true"; }
+      else editing[k]=el.value;
+      refreshAfterChange();
+    }
+    function refreshAfterChange(){ save(); renderLive(); }
+    var sb=$("#saveBottom"); if(sb) sb.onclick=function(){
+      if(editIsNew && isBlank(editing)){ dropIfBlankNew(); toast("内容为空，未保存"); go("#list"); return; }
+      save(); toast("已保存"); go("#list");
+    };
+    var cb=$("#copyBtn"); if(cb) cb.onclick=function(){ copySummary(editing); };
+  }
+
+  function renderLive(){
+    var f=editing, r=calc(f);
+    var panel=$("#livePanel");
+    var costRows=[
+      ["月租",(Number(f.rent)||0)+" 元"],
+      ["预估电费",((Number(f.ePrice)||0)*(Number(f.eKwh)||0)).toFixed(0)+" 元（"+(f.ePrice||0)+"×"+(f.eKwh||0)+"度）"],
+      ["预估水费",((Number(f.wPrice)||0)*(Number(f.wTon)||0)).toFixed(0)+" 元"],
+      ["公摊+网费",((Number(f.sharedFee)||0)+(Number(f.netFee)||0))+" 元"]
+    ];
+    var segs = segParts(r);
+    panel.innerHTML =
+      '<div class="box score-box"><div class="score-line"><span class="n mono" style="color:'+gradeColor(r.score)+'">'+r.score+'</span><span class="of mono">/ 100</span></div>'
+      + '<div class="g"><span class="label '+gradeLabel(r.score)+'">'+grade(r.score)+'</span></div>'
+      + '<div class="progress"><span style="width:'+r.score+'%;background:'+gradeColor(r.score)+';"></span></div></div>'
+      + '<div class="box"><div class="box-head"><span>费用预估</span></div><div class="box-body costrows">'
+      +   costRows.map(function(x){return '<div class="row"><span>'+x[0]+'</span><span class="v mono">'+x[1]+'</span></div>';}).join("")
+      +   '<div class="row total"><span>预估月总成本</span><span class="v mono">¥ '+r.monthCost+'</span></div>'
+      +   '<div class="flash '+(r.budgetOver?"over":"in")+'">'+(Number(f.rent)>0 ? (r.budgetOver? "月租已超 "+BUDGET+" 元预算":"月租在 "+BUDGET+" 元预算内"):"填了月租后判定预算")+'</div>'
+      + '</div></div>'
+      + '<div class="box"><div class="box-head"><span>得分构成</span><span class="hint">满分 100</span></div><div class="box-body">'
+      +   '<div class="segbar" style="margin-top:2px;">'+ segs.map(function(s){
+            return '<span style="width:'+Math.max(0,Math.min(100,s.v)).toFixed(1)+'%;background:'+s.color+'" title="'+s.name+' '+s.v.toFixed(1)+' / '+s.max+'"></span>';
+          }).join("") + '</div>'
+      +   '<div class="legend">'+ segs.map(function(s){
+            return '<span class="lg"><span class="dot" style="background:'+s.color+'"></span>'+s.name+'<span class="val mono">'+s.v.toFixed(1)+'<em>/'+s.max+'</em></span></span>';
+          }).join("") + '</div>'
+      +   (r.parts.risk>0?'<div class="riskline">风险已扣 −'+r.parts.risk+' 分</div>':'')
+      + '</div></div>'
+      + '<div class="box"><div class="box-head"><span>实时提示</span></div><div class="box-body"><div class="live-warn">'+ r.warnings.map(function(w){return '<span class="label lb-'+WLB[w[0]]+'">'+w[1]+'</span>';}).join("") +'</div></div></div>';
+  }
+
+  /* ================= 启动 ================= */
+  function render(){
+    var rt=currentRoute();
+    if(rt.view==="edit"){ renderEdit(rt.id); } else { renderList(); }
+    window.scrollTo(0,0);
+  }
+  render();
+})();
+</script>
+</body>
+</html>

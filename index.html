@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>扫楼打分本 · 城中村看房实时评分对比</title>
+<title>扫楼打分本 · 租房实时评分对比</title>
+<link rel="icon" type="image/svg+xml" href="saolou.svg">
+<link rel="apple-touch-icon" href="saolou.svg">
+<link rel="mask-icon" href="saolou.svg" color="#1a7f37">
 <style>
   :root{
     --canvas:#ffffff; --subtle:#f6f8fa;
@@ -83,6 +86,14 @@
   .lb-accent{background:var(--accent-sub);color:var(--accent);}
   .lb-attention{background:var(--attention-sub);color:var(--attention);}
   .lb-danger{background:var(--danger-sub);color:var(--danger);}
+  .lb-demo{background:rgba(175,184,193,.32);color:var(--muted);}
+  .demo-bar{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    background:var(--accent-sub);border:1px solid rgba(9,105,218,.28);
+    border-radius:6px;padding:11px 14px;margin-bottom:13px;font-size:12.8px;color:var(--fg);
+  }
+  .demo-bar .t{flex:1;min-width:210px;line-height:1.7;}
+  .demo-bar .t b{color:var(--accent);}
   .counter{
     display:inline-flex;align-items:center;padding:0 9px;height:20px;
     font-size:11px;font-weight:600;line-height:1;border-radius:1em;
@@ -108,6 +119,48 @@
   details.rules[open] summary{border-bottom:1px solid var(--border-muted);border-radius:6px 6px 0 0;}
   details.rules .rb{padding:12px 16px;font-size:12.8px;color:var(--muted);line-height:1.9;}
   details.rules .rb b{color:var(--fg);}
+  .set-block{margin-bottom:14px;}
+  .set-label{font-size:12.5px;font-weight:600;margin-bottom:6px;color:var(--fg);}
+  .set-hint{font-size:11.5px;color:var(--faint);margin-top:6px;line-height:1.6;}
+  .set-num{
+    width:120px;border:1px solid var(--border);border-radius:6px;padding:6px 10px;
+    background:var(--subtle);min-height:38px;outline:none;font-size:14px;
+  }
+  .set-num:focus{background:#fff;border-color:var(--accent);box-shadow:0 0 0 3px rgba(9,105,218,.3);outline:none;}
+  .set-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:8px;}
+  .set-item{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);}
+  .set-item input{
+    width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 8px;
+    background:var(--subtle);min-height:36px;outline:none;font-size:13px;
+  }
+  .set-item input:focus{background:#fff;border-color:var(--accent);box-shadow:0 0 0 3px rgba(9,105,218,.3);outline:none;}
+  .set-presets{display:flex;flex-wrap:wrap;gap:8px;}
+
+  /* ===== 地图 ===== */
+  .map-box{height:230px;border-radius:6px;overflow:hidden;border:1px solid var(--border);background:var(--subtle);}
+  .map-box.big{height:min(62vh,520px);}
+  .map-loading{
+    height:100%;display:flex;align-items:center;justify-content:center;
+    font-size:12.5px;color:var(--faint);text-align:center;padding:0 20px;line-height:1.7;
+  }
+  .map-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .map-tip{font-size:11.5px;color:var(--faint);margin-top:8px;line-height:1.7;}
+  .mk{
+    width:26px;height:26px;border-radius:50%;background:var(--success-em);color:#fff;
+    font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;
+    border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);font-family:var(--mono);
+  }
+  .mk.company{background:var(--accent);font-size:13px;}
+  .mk.pick{background:var(--danger);}
+  .amap-info-content{padding:10px 12px;font-size:12.5px;line-height:1.7;color:var(--fg);}
+  .amap-info-content b{font-size:13.5px;}
+  .amap-info-content .r{color:var(--muted);}
+  .viewtabs{display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:#fff;}
+  .viewtabs button{
+    border:none;background:#fff;color:var(--muted);font-size:12.5px;padding:0 14px;min-height:34px;font-weight:500;
+  }
+  .viewtabs button + button{border-left:1px solid var(--border);}
+  .viewtabs button.on{background:var(--fg);color:#fff;}
 
   .flat{margin-bottom:12px;}
   .flat.best{border-color:var(--success);}
@@ -120,6 +173,47 @@
   .flat-name .pen{color:var(--faint);flex:0 0 auto;transform:translateY(1px);}
   .flat-name:hover{color:var(--accent);}
   .meta{font-size:12.5px;color:var(--muted);margin-top:5px;word-break:break-all;}
+
+  /* ===== 照片 ===== */
+  .photo-strip{display:flex;gap:6px;overflow-x:auto;margin-top:12px;-webkit-overflow-scrolling:touch;}
+  .photo-strip:empty{display:none;}
+  .photo-strip img{
+    width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--border);
+    flex:0 0 auto;cursor:pointer;background:var(--subtle);
+  }
+  .photogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;}
+  .ph{position:relative;aspect-ratio:1/1;border-radius:6px;overflow:hidden;border:1px solid var(--border);background:var(--subtle);}
+  .ph img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;}
+  .ph-del{
+    position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:none;
+    background:rgba(31,35,40,.75);color:#fff;font-size:12px;line-height:1;cursor:pointer;
+  }
+  .ph-add{
+    border:1.5px dashed var(--border);background:var(--subtle);cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    color:var(--muted);font-size:12px;
+  }
+  .ph-add:hover{background:#eef1f4;}
+  .ph-add .plus{font-size:22px;line-height:1;color:var(--faint);}
+  .lightbox{
+    position:fixed;inset:0;background:rgba(1,4,9,.93);z-index:100;display:none;
+    align-items:center;justify-content:center;
+  }
+  .lightbox.open{display:flex;}
+  .lightbox img{max-width:94vw;max-height:80vh;border-radius:6px;}
+  .lb-close{
+    position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;border:none;
+    background:rgba(255,255,255,.14);color:#fff;font-size:17px;cursor:pointer;
+  }
+  .lb-bar{
+    position:absolute;bottom:20px;left:0;right:0;display:flex;align-items:center;justify-content:center;
+    gap:20px;color:#fff;font-size:13px;
+  }
+  .lb-bar button{
+    width:46px;height:46px;border-radius:50%;border:none;background:rgba(255,255,255,.14);
+    color:#fff;font-size:22px;line-height:1;cursor:pointer;
+  }
+  .lb-bar button:active{background:rgba(255,255,255,.28);}
 
   /* 得分构成条（语言条式） */
   .segbar{display:flex;height:10px;border-radius:6px;overflow:hidden;background:rgba(175,184,193,.3);margin-top:13px;}
@@ -135,6 +229,15 @@
   .cost.in{color:var(--success);} .cost.over{color:var(--danger);}
   .cost2{font-size:12px;color:var(--muted);}
   .acts{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;}
+  .status-sel{
+    border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--fg);
+    font-size:12.5px;min-height:36px;padding:0 8px;outline:none;cursor:pointer;
+  }
+  .status-sel:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(9,105,218,.3);}
+  .filters{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:13px;}
+  .filters .chip{min-height:34px;padding:0 12px;font-size:12.5px;background:#fff;}
+  .filters .chip.on{background:var(--fg);border-color:var(--fg);color:#fff;font-weight:500;}
+  .filters .chip span{opacity:.7;}
 
   .blankslate{padding:44px 24px;text-align:center;}
   .blankslate h3{margin:12px 0 6px;font-size:16px;font-weight:600;}
@@ -240,6 +343,11 @@
 <body>
 <div class="app" id="app"></div>
 <div class="toast" id="toast"></div>
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" id="lbClose" aria-label="关闭">✕</button>
+  <img id="lbImg" alt="照片查看">
+  <div class="lb-bar"><button id="lbPrev" aria-label="上一张">‹</button><span id="lbCount" class="mono"></span><button id="lbNext" aria-label="下一张">›</button></div>
+</div>
 
 <script>
 (function(){
@@ -258,20 +366,82 @@
   var SUBJECTS = [["value","性价比"],["light","采光通风"],["quiet","安静安全"],["owner","房东靠谱"]];
   var HTYPES = ["单间","一房一厅","两房一厅"];
   var ORIENTS = ["南","北","东","西","东南","西南"];
+  /* 通勤方式与各自的满分时间（分钟内满分，超过按比例降） */
+  var CMODES = ["步行","骑车","电动车","公交地铁","开车"];
+  var CMODE_T = {"步行":15,"骑车":10,"电动车":15,"公交地铁":30,"开车":20};
   var STORE_KEY = "fs-rent-scorer-v1";
-  var BUDGET = 700;
+  /* 高德地图 */
+  var AMAP_KEY = "24720124bbea2d080fc7df036065c9bc";
+  var AMAP_SEC = "8c8a0b836d06661bbbf603fe47293a79";
+  var CITY = "佛山";
+  /* 看房状态 */
+  var STATUSES = [["","未标记"],["candidate","候选"],["revisit","已约复看"],["signed","已定"],["dropped","淘汰"]];
+  var ST_LABEL = {"":"",candidate:"候选",revisit:"已约复看",signed:"已定",dropped:"淘汰"};
+  var ST_CLASS = {candidate:"lb-accent",revisit:"lb-attention",signed:"lb-success",dropped:"lb-danger"};
   /* 得分构成条配色（对应 5 个评分项） */
   var SEG = [["租金","#1a7f37"],["通勤","#0969da"],["水电","#8250df"],["硬件","#9a6700"],["印象","#bf3989"]];
   var WLB = {r:"danger",a:"attention",g:"success"};
   var PEN = '<svg class="pen" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M11.3 2.3a1.6 1.6 0 0 1 2.3 2.3L5.4 12.8l-3.1.9.9-3.1 8.1-8.3z"/></svg>';
   var HOUSE = function(size,color){ return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 16 16" fill="'+(color||"currentColor")+'" aria-hidden="true"><path d="M8 1.2 1.2 7.4h2V14h3.6V9.3h2.4V14h3.6V7.4h2L8 1.2z"/></svg>'; };
+  /* 站点图标（saolou.svg 的房子+放大镜造型；内联以便跟随深色顶栏变白） */
+  var ICON_PATH = "M486.93248 36.43392a48.59904 48.59904 0 0 1 50.09408 0L1024 328.62208l-50.15552 83.49696-23.61344-14.17216V610.7136h-97.40288V339.51744L512 134.98368 171.13088 339.51744v557.60896H466.3296v97.40288H122.42944A48.70144 48.70144 0 0 1 73.728 945.82784V398.04928l-23.61344 14.1312L0 328.66304z m173.056 492.19584A194.12992 194.12992 0 0 1 812.4416 842.9568c2.51904 1.16736 4.95616 2.6624 7.24992 4.42368l3.64544 3.23584 77.66016 77.6192a38.83008 38.83008 0 0 1-51.26144 58.14272l-3.64544-3.23584-77.63968-77.63968a38.66624 38.66624 0 0 1-9.56416-15.70816 194.12992 194.12992 0 1 1-98.87744-361.14432z m0 77.66016a116.46976 116.46976 0 1 0 0 232.93952 116.46976 116.46976 0 0 0 0-232.93952z";
+  var ICON = function(size,color){
+    return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 1024 1024" fill="'+(color||"currentColor")+'" aria-hidden="true" style="display:block;flex:0 0 auto;"><path d="'+ICON_PATH+'"/></svg>';
+  };
   var CHEV = '<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4.2 5.7 8 9.5l3.8-3.8 1.1 1.1L8 11.7 3.1 6.8z"/></svg>';
 
   /* ================= 状态 ================= */
-  var state = { flats: [] };
-  try{ var raw = localStorage.getItem(STORE_KEY); if(raw){ state = JSON.parse(raw); } }catch(e){ state = {flats:[]}; }
+  var DEFAULT_W = {rent:25,commute:10,util:10,feat:25,subj:30};
+  var WKEYS = ["rent","commute","util","feat","subj"];
+  var WNAMES = [["rent","租金"],["commute","通勤"],["util","水电"],["feat","硬件"],["subj","印象"]];
+  var PRESETS = [
+    ["均衡（默认）", DEFAULT_W],
+    ["租金优先", {rent:35,commute:10,util:10,feat:20,subj:25}],
+    ["通勤优先", {rent:20,commute:18,util:10,feat:24,subj:28}],
+    ["省心优先", {rent:20,commute:10,util:10,feat:25,subj:35}]
+  ];
+  function defSettings(){ return {budget:700, weights:Object.assign({},DEFAULT_W), company:null}; }
+  /* 首月一次性支出：押金 + 首月租金 + 中介费（付款月数按首月只付一个月算） */
+  function firstCost(f){
+    var rent = Number(f.rent)||0;
+    var dep = (Number(f.deposit)||1) * rent;
+    var broker = Number(f.brokerFee)||0;
+    return { deposit:dep, broker:broker, total:rent+dep+broker, rent:rent };
+  }
+  /* 两点球面距离（米） */
+  function distance(a, b){
+    if(!a || !b || a.lng==null || b.lng==null) return null;
+    var R=6371000, rad=Math.PI/180;
+    var dLat=(b.lat-a.lat)*rad, dLng=(b.lng-a.lng)*rad;
+    var s = Math.sin(dLat/2)*Math.sin(dLat/2) +
+            Math.cos(a.lat*rad)*Math.cos(b.lat*rad)*Math.sin(dLng/2)*Math.sin(dLng/2);
+    return 2*R*Math.asin(Math.min(1,Math.sqrt(s)));
+  }
+  function fmtDist(m){
+    if(m==null) return "";
+    return m<1000 ? Math.round(m)+" m" : (m/1000).toFixed(1)+" km";
+  }
+  var state = { flats: [], settings: defSettings() };
+  var firstVisit = false;
+  try{
+    var raw = localStorage.getItem(STORE_KEY);
+    if(raw){
+      var s0 = JSON.parse(raw);
+      state = { flats: s0.flats||[], settings: defSettings() };
+      if(s0.settings){
+        if(Number(s0.settings.budget)>0) state.settings.budget = Math.round(Number(s0.settings.budget));
+        if(s0.settings.weights) WKEYS.forEach(function(k){
+          if(Number(s0.settings.weights[k])>=0) state.settings.weights[k]=Number(s0.settings.weights[k])||0;
+        });
+        if(s0.settings.company && s0.settings.company.lng!=null) state.settings.company = s0.settings.company;
+      }
+    }else{
+      firstVisit = true;
+    }
+  }catch(e){ state = { flats: [], settings: defSettings() }; firstVisit = true; }
   function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
-  function uid(){ return "f" + Date.now().toString(36) + Math.floor(Math.random()*999); }
+  var uidSeq = 0;
+  function uid(){ uidSeq++; return "f" + Date.now().toString(36) + uidSeq + Math.floor(Math.random()*900+100); }
 
   function blankFlat(){
     var feats = {}; FEATURES.forEach(function(f){ feats[f[0]] = false; });
@@ -280,30 +450,99 @@
     return {
       id:uid(), createdAt:Date.now(),
       title:"", village:"", addr:"", phone:"", htype:"单间", area:"", floor:"", totalFloor:"", lift:false,
-      orient:"南", roadside:"巷内", commuteMin:"",
+      orient:"南", roadside:"巷内", commuteMode:"骑车", commuteMin:"", loc:null,
       rent:"", deposit:1, pay:1, ePrice:"", wPrice:"", sharedFee:"", netFee:"", eKwh:120, wTon:4,
-      features:feats, risks:risks, scores:sc, note:""
+      features:feats, risks:risks, scores:sc, note:"", photos:[], status:"", brokerFee:""
     };
+  }
+
+  /* ================= 示例数据（首次进入展示，帮助上手） ================= */
+  function demoFlat(o){
+    var f = blankFlat();
+    f.demo = true;
+    FEATURES.forEach(function(x){ f.features[x[0]] = o.feats.indexOf(x[0]) >= 0; });
+    RISKS.forEach(function(x){ f.risks[x[0]] = !!(o.risks && o.risks.indexOf(x[0]) >= 0); });
+    SUBJECTS.forEach(function(s){ f.scores[s[0]] = (o.scores && o.scores[s[0]]) || 0; });
+    f.title=o.title||""; f.village=o.village||""; f.addr=o.addr||"";
+    f.htype=o.htype||"单间"; f.area=o.area||""; f.floor=o.floor||""; f.totalFloor=o.totalFloor||"";
+    f.lift=!!o.lift; f.orient=o.orient||"南"; f.roadside=o.roadside||"巷内";
+    f.commuteMode=o.commuteMode||"骑车"; f.commuteMin=o.commuteMin||"";
+    f.rent=o.rent||""; f.deposit=o.deposit||1; f.pay=o.pay||1;
+    f.ePrice=o.ePrice||""; f.wPrice=o.wPrice||""; f.sharedFee=o.sharedFee||""; f.netFee=o.netFee||"";
+    f.eKwh=o.eKwh||120; f.wTon=o.wTon||4; f.brokerFee=o.brokerFee||"";
+    f.note=o.note||""; f.status=o.status||""; f.loc=o.loc||null;
+    return f;
+  }
+  var ALLFEAT = FEATURES.map(function(x){return x[0];});
+  function demoFlats(){
+    var out = [];
+    /* 示例1：好房——村名+门牌、硬件全、水电民价、通勤近 → 优先定这套 */
+    out.push(demoFlat({
+      title:"", village:"弼塘村", addr:"西便村12巷5号", htype:"单间", area:"18", floor:"3", totalFloor:"7",
+      orient:"南", roadside:"巷内", commuteMode:"骑车", commuteMin:"8", rent:"620", deposit:1, pay:1,
+      ePrice:"0.65", wPrice:"4", sharedFee:"10", netFee:"0", eKwh:120, wTon:4,
+      feats:["ac","ac1","heater","bed","wardrobe","desk","fridge","bath","light","vent","water","signal","wifi","noseep","socket"],
+      scores:{value:5,light:5,quiet:4,owner:5},
+      note:"房东好说话，说可以小砍 50，约周六下午复看。",
+      loc:{lng:113.1073,lat:23.0155}
+    }));
+    /* 示例2：还行但有短板——一房一厅、采光一般、电费略高 → 值得复看 */
+    out.push(demoFlat({
+      title:"", village:"简村村", addr:"简村东便2巷8号", htype:"一房一厅", area:"30", floor:"2", totalFloor:"6",
+      orient:"东南", roadside:"巷内", commuteMode:"电动车", commuteMin:"12", rent:"680", deposit:1, pay:1,
+      ePrice:"0.9", wPrice:"4.5", sharedFee:"0", netFee:"0", eKwh:130, wTon:4,
+      feats:["ac","heater","bed","wardrobe","desk","fridge","washer","bath","vent","water","wifi","socket"],
+      scores:{value:4,light:3,quiet:3,owner:4},
+      note:"格局不错，但白天要开灯；电费 0.9 元/度偏高，签前再确认一次。",
+      loc:{lng:113.1198,lat:23.0281}
+    }));
+    /* 示例3：一般备选——硬件还行、通勤稍远、电费偏高，有点小毛病但能接受 */
+    out.push(demoFlat({
+      title:"", village:"大沙村", addr:"大沙第南一巷8号", htype:"单间", area:"20", floor:"4", totalFloor:"6",
+      orient:"南", roadside:"巷内", commuteMode:"电动车", commuteMin:"20", rent:"680", deposit:1, pay:1,
+      ePrice:"0.9", wPrice:"4.5", sharedFee:"10", netFee:"0", eKwh:130, wTon:4,
+      feats:["ac","heater","bed","wardrobe","desk","fridge","bath","light","vent","water","wifi","socket","noseep"],
+      risks:["dark"],
+      scores:{value:3,light:3,quiet:3,owner:3},
+      note:"户型方正、硬件齐，但朝内采光一般，电费 0.9 元/度偏高，先留作备选。",
+      loc:{lng:113.1285,lat:23.0402}
+    }));
+    /* 示例4：硬伤明显——二房东+一楼潮湿+电费1.35+押二付二 → 建议放弃 */
+    out.push(demoFlat({
+      title:"", village:"张槎村", addr:"张槎三路12号", htype:"单间", area:"14", floor:"1", totalFloor:"7",
+      orient:"北", roadside:"路边", commuteMode:"公交地铁", commuteMin:"32", rent:"620", deposit:2, pay:2,
+      ePrice:"1.35", wPrice:"5.5", sharedFee:"30", netFee:"60", eKwh:180, wTon:5, brokerFee:"350",
+      feats:["ac","heater","bed","wardrobe","bath","signal","socket"],
+      risks:["sublandlord","groundfloor"],
+      scores:{value:2,light:2,quiet:2,owner:2},
+      note:"公寓公司转租要查授权；一楼潮、电费 1.35 元/度，押二付二首月压力大。",
+      loc:{lng:113.0836,lat:23.0452}
+    }));
+    return out;
   }
 
   /* ================= 算分（规则透明，见页面说明） ================= */
   function calc(f){
     var rent = Number(f.rent)||0, ep = Number(f.ePrice)||0, wp = Number(f.wPrice)||0;
     var commute = Number(f.commuteMin)||0;
-    // 1) 租金分 25：450及以下满分，1000及以上≈5
-    var rentScore = rent<=0 ? 0 : Math.max(5, Math.min(25, 25 - Math.max(0,rent-450)/550*20));
-    // 2) 通勤分 10：10分钟内满分，30分钟以上≈3；未填按6中性
-    var commuteScore = commute<=0 ? 6 : Math.max(3, Math.min(10, 10 - Math.max(0,commute-10)/20*7));
-    // 3) 水电合理度 10（电占70% 水占30%）
+    // 各项先在默认满分（25/10/10/25/30）下算原始分，再按用户权重缩放；权重合计恒为 100，总分仍为百分制
+    var W = state.settings.weights;
+    // 1) 租金：450 及以下满分，1000 及以上≈5
+    var rentRaw = rent<=0 ? 0 : Math.max(5, Math.min(25, 25 - Math.max(0,rent-450)/550*20));
+    // 2) 通勤：按方式给满分时间（骑车10/步行·电动车15/开车20/公交地铁30），超时按比例降，保底3；未填按6中性
+    var cmT = CMODE_T[f.commuteMode] || 10;
+    var commuteRaw = commute<=0 ? 6 : Math.max(3, Math.min(10, 10 - Math.max(0,commute-cmT)/(2*cmT)*7));
+    // 3) 水电合理度（电占70% 水占30%）
     var eS = ep<=0?6:(ep<=0.65?10:ep<=0.9?7:ep<=1.2?4:1);
     var wS = wp<=0?6:(wp<=3.5?10:wp<=5?6:2);
-    var utilScore = eS*0.7 + wS*0.3;
-    // 4) 硬件齐全度 25
+    // 4) 硬件齐全度  5) 主观印象
     var got = FEATURES.filter(function(x){return f.features[x[0]];}).length;
-    var featScore = got/FEATURES.length*25;
-    // 5) 主观评分 30
     var sv = SUBJECTS.map(function(s){return Number(f.scores[s[0]])||0;});
-    var subjScore = (sv.reduce(function(a,b){return a+b;},0)/(SUBJECTS.length*5))*30;
+    var rentScore = rentRaw/25*W.rent;
+    var commuteScore = commuteRaw/10*W.commute;
+    var utilScore = (eS*0.7 + wS*0.3)/10*W.util;
+    var featScore = got/FEATURES.length*W.feat;
+    var subjScore = (sv.reduce(function(a,b){return a+b;},0)/(SUBJECTS.length*5))*W.subj;
     // 风险扣分
     var riskPenalty = (f.risks.sublandlord?8:0)+(f.risks.dark?8:0)+(f.risks.topfloor?5:0)+(f.risks.groundfloor?5:0)+(ep>=1.2?6:0);
     var score = Math.max(0, Math.round(rentScore+commuteScore+utilScore+featScore+subjScore-riskPenalty));
@@ -317,20 +556,21 @@
     if(f.risks.dark) warnings.push(["a","暗间，白天也要开灯"]);
     if(f.risks.topfloor) warnings.push(["a","顶楼注意西晒漏水"]);
     if(f.risks.groundfloor) warnings.push(["a","一楼注意潮湿水浸"]);
-    if(rent>BUDGET) warnings.push(["r","月租超 "+BUDGET+" 预算"]);
+    if(rent>state.settings.budget) warnings.push(["r","月租超 "+state.settings.budget+" 预算"]);
     if(!warnings.length && rent>0) warnings.push(["g","未发现明显硬伤"]);
 
     return {
       score:score, monthCost:Math.round(monthCost),
       parts:{rent:rentScore,commute:commuteScore,util:utilScore,feat:featScore,subj:subjScore,risk:riskPenalty},
-      got:got, total:FEATURES.length, warnings:warnings, budgetOver:rent>BUDGET
+      got:got, total:FEATURES.length, warnings:warnings, budgetOver:rent>state.settings.budget
     };
   }
   function grade(s){ if(s>=80)return "优先定这套"; if(s>=68)return "值得复看"; if(s>=55)return "一般，备选"; return "建议放弃"; }
   function gradeColor(s){ if(s>=80)return "#1a7f37"; if(s>=68)return "#0969da"; if(s>=55)return "#9a6700"; return "#cf222e"; }
   function gradeLabel(s){ if(s>=80)return "lb-success"; if(s>=68)return "lb-accent"; if(s>=55)return "lb-attention"; return "lb-danger"; }
-  function segParts(r,dec){
-    var parts=[["租金",r.parts.rent,25],["通勤",r.parts.commute,10],["水电",r.parts.util,10],["硬件",r.parts.feat,25],["印象",r.parts.subj,30]];
+  function segParts(r){
+    var W = state.settings.weights;
+    var parts=[["租金",r.parts.rent,W.rent],["通勤",r.parts.commute,W.commute],["水电",r.parts.util,W.util],["硬件",r.parts.feat,W.feat],["印象",r.parts.subj,W.subj]];
     return SEG.map(function(s,i){
       return {name:s[0],color:s[1],v:parts[i][1],max:parts[i][2]};
     });
@@ -341,6 +581,389 @@
   function esc(t){return String(t==null?"":t).replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m];});}
   var toastTimer;
   function toast(msg){ var t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(function(){t.classList.remove("show");},1900); }
+
+  /* ================= 评分设置（预算与权重） ================= */
+  var settingsOpen = false;
+  function normalizeW(w){
+    var sum=0; WKEYS.forEach(function(k){ sum+=w[k]; });
+    if(sum<=0) return Object.assign({},DEFAULT_W);
+    var k=100/sum, out={};
+    WKEYS.forEach(function(kk){ out[kk]=Math.round(w[kk]*k*10)/10; });
+    var done=0; WKEYS.forEach(function(kk){ done+=out[kk]; });
+    var diff=Math.round((100-done)*10)/10;
+    var big=WKEYS[0]; WKEYS.forEach(function(kk){ if(out[kk]>out[big]) big=kk; });
+    out[big]=Math.round((out[big]+diff)*10)/10;
+    return out;
+  }
+  function rerenderList(){
+    var sy=window.scrollY;
+    renderList();
+    var sb=$("#settingsBox"); if(sb&&settingsOpen) sb.open=true;
+    window.scrollTo(0,sy);
+  }
+
+  /* ================= 照片（IndexedDB，每套最多 9 张） ================= */
+  var MAXPHOTOS = 9, photoDB = null, photoURLCache = {};
+  function openPhotoDB(){
+    return new Promise(function(res, rej){
+      if(photoDB) return res(photoDB);
+      try{
+        var rq = indexedDB.open("fs-rent-scorer-pics", 1);
+        rq.onupgradeneeded = function(){ rq.result.createObjectStore("pics", {keyPath:"id"}); };
+        rq.onsuccess = function(){ photoDB = rq.result; res(photoDB); };
+        rq.onerror = function(){ rej(rq.error); };
+      }catch(e){ rej(e); }
+    });
+  }
+  function photoPut(id, flatId, blob){
+    return openPhotoDB().then(function(db){
+      return new Promise(function(res, rej){
+        var tx = db.transaction("pics","readwrite");
+        tx.objectStore("pics").put({id:id, flatId:flatId, blob:blob, addedAt:Date.now()});
+        tx.oncomplete = function(){ res(); };
+        tx.onerror = function(){ rej(tx.error); };
+      });
+    });
+  }
+  function photoGet(id){
+    return openPhotoDB().then(function(db){
+      return new Promise(function(res){
+        var rq = db.transaction("pics").objectStore("pics").get(id);
+        rq.onsuccess = function(){ res(rq.result ? rq.result.blob : null); };
+        rq.onerror = function(){ res(null); };
+      });
+    }).catch(function(){ return null; });
+  }
+  function photoDel(ids){
+    if(!ids || !ids.length) return Promise.resolve();
+    return openPhotoDB().then(function(db){
+      return new Promise(function(res){
+        var tx = db.transaction("pics","readwrite");
+        ids.forEach(function(id){
+          tx.objectStore("pics").delete(id);
+          if(photoURLCache[id]){ try{ URL.revokeObjectURL(photoURLCache[id]); }catch(e){} delete photoURLCache[id]; }
+        });
+        tx.oncomplete = res; tx.onerror = res;
+      });
+    }).catch(function(){});
+  }
+  function photoURL(id){
+    if(photoURLCache[id]) return Promise.resolve(photoURLCache[id]);
+    return photoGet(id).then(function(blob){
+      if(!blob) return null;
+      photoURLCache[id] = URL.createObjectURL(blob);
+      return photoURLCache[id];
+    });
+  }
+  function photoIds(f){ if(!f.photos) f.photos=[]; return f.photos; }
+  function compressImage(file){
+    return new Promise(function(resolve, reject){
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function(){
+        try{
+          var scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+          var c = document.createElement("canvas");
+          c.width = Math.round(img.width*scale); c.height = Math.round(img.height*scale);
+          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+          c.toBlob(function(blob){
+            URL.revokeObjectURL(url);
+            if(blob) resolve(blob); else reject(new Error("toBlob fail"));
+          }, "image/jpeg", 0.75);
+        }catch(e){ URL.revokeObjectURL(url); reject(e); }
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error("img load fail")); };
+      img.src = url;
+    });
+  }
+  function hydrateListPhotos(root){
+    root.querySelectorAll(".photo-strip[data-flat]").forEach(function(strip){
+      var f = null;
+      state.flats.forEach(function(x){ if(x.id===strip.getAttribute("data-flat")) f=x; });
+      var ids = (f && f.photos) || [];
+      if(!ids.length){ strip.remove(); return; }
+      Promise.all(ids.map(function(id){ return photoURL(id); })).then(function(urls){
+        if(!strip.isConnected) return;
+        urls.forEach(function(u,ix){
+          if(!u) return;
+          var im = new Image();
+          im.src = u; im.alt = "照片"+(ix+1);
+          im.onclick = function(){ openLightbox(ids, ix); };
+          strip.appendChild(im);
+        });
+        if(!strip.children.length) strip.remove();
+      });
+    });
+  }
+  /* 照片灯箱 */
+  var lbState = { ids:[], idx:0 };
+  function openLightbox(ids, ix){ lbState.ids = ids; lbState.idx = ix; $("#lightbox").classList.add("open"); showLightbox(); }
+  function showLightbox(){
+    photoURL(lbState.ids[lbState.idx]).then(function(u){
+      if(!u){ closeLightbox(); return; }
+      $("#lbImg").src = u;
+      $("#lbCount").textContent = (lbState.idx+1)+" / "+lbState.ids.length;
+    });
+  }
+  function closeLightbox(){ $("#lightbox").classList.remove("open"); $("#lbImg").removeAttribute("src"); }
+
+  /* ================= 高德地图 ================= */
+  var amapPromise = null;
+  function loadAMap(){
+    if(amapPromise) return amapPromise;
+    amapPromise = new Promise(function(res, rej){
+      window._AMapSecurityConfig = { securityJsCode: AMAP_SEC };
+      var s = document.createElement("script");
+      s.src = "https://webapi.amap.com/maps?v=2.0&key=" + AMAP_KEY;
+      s.onload = function(){ window.AMap ? res(window.AMap) : rej(new Error("AMap 未就绪")); };
+      s.onerror = function(){ rej(new Error("地图脚本加载失败")); };
+      document.head.appendChild(s);
+    }).catch(function(e){ amapPromise = null; throw e; });
+    return amapPromise;
+  }
+  function mapFallback(box, msg){
+    box.innerHTML = '<div class="map-loading">'+ (msg || "地图加载失败，可能是网络不通。<br>不影响打分和记录，可稍后重试。") +'</div>';
+  }
+  /* 检测 key 域名白名单问题：底图空白但标记正常时给出明确提示 */
+  function checkMapDomain(box){
+    setTimeout(function(){
+      if(!box.isConnected) return;
+      var hasTiles = box.querySelector("canvas") && box.querySelectorAll("canvas").length > 0;
+      fetch("https://o4.amap.com/style/2.0.2.45/v1/pbf/1_0_s_migrate?key="+AMAP_KEY)
+        .then(function(r){ return r.text(); })
+        .then(function(t){
+          if(t.indexOf("INVALID_USER_DOMAIN")>=0 && box.isConnected){
+            var tip = document.createElement("div");
+            tip.className = "map-tip";
+            tip.style.cssText = "color:var(--danger);font-weight:500;margin-top:8px;";
+            tip.textContent = "⚠ 高德 key 未配置域名白名单（错误码 10006），底图加载不出来。去 console.amap.com/dev/key 编辑这个 key，在「域名白名单」里填 " + location.hostname + "（本地测试填 localhost），保存后刷新。";
+            box.parentNode.appendChild(tip);
+          }
+        }).catch(function(){});
+    }, 2500);
+  }
+  /* 在指定容器里画一张地图：picks 可点击取点，markers 展示房/公司 */
+  function drawMap(box, opts){
+    opts = opts || {};
+    loadAMap().then(function(AMap){
+      if(!box.isConnected) return;
+      box.innerHTML = "";
+      var center = opts.center || (state.settings.company ? [state.settings.company.lng, state.settings.company.lat] : null);
+      var map = new AMap.Map(box, {
+        zoom: opts.zoom || 14,
+        center: center || undefined,
+        viewMode: "2D",
+        resizeEnable: true
+      });
+      if(!center){
+        map.setCity(CITY);
+      }
+      (opts.markers || []).forEach(function(m){
+        if(m.lng==null) return;
+        var mk = new AMap.Marker({
+          position: [m.lng, m.lat],
+          content: '<div class="mk'+(m.kind?" "+m.kind:"")+'">'+m.label+'</div>',
+          offset: new AMap.Pixel(-13, -13),
+          zIndex: m.zIndex || 100
+        });
+        map.add(mk);
+        if(m.info){
+          var iw = new AMap.InfoWindow({content:m.info, offset:new AMap.Pixel(0,-18)});
+          mk.on("click", function(){
+            iw.open(map, mk.getPosition());
+            if(m.onClick) m.onClick(m, map);
+          });
+        }else if(m.onClick){
+          mk.on("click", function(){ m.onClick(m, map); });
+        }
+      });
+      /* 多点时自动缩放到全部点位 */
+      if((opts.markers||[]).filter(function(m){return m.lng!=null;}).length > 1){
+        map.setFitView(null, false, [60,60,60,60]);
+      }
+      if(opts.onPick){
+        map.on("click", function(e){ opts.onPick(e.lnglat.getLng(), e.lnglat.getLat(), map); });
+      }
+      if(opts.onReady) opts.onReady(map, AMap);
+      checkMapDomain(box);
+    }).catch(function(){
+      if(box.isConnected) mapFallback(box);
+    });
+  }
+  /* 通勤方式 → 高德路线插件 */
+  var ROUTE_PLUGIN = {"步行":"AMap.Walking","骑车":"AMap.Riding","电动车":"AMap.Riding","公交地铁":"AMap.Transfer","开车":"AMap.Driving"};
+  function clearRoute(map){
+    if(map && map.__routeInst){ try{ map.__routeInst.clear(); }catch(e){} map.__routeInst = null; }
+  }
+  /* 画导航路线并取回耗时（分钟）/距离（米） */
+  function drawRoute(map, from, to, mode, cb, errCb){
+    if(!map || !from || !to){ errCb("缺少位置信息"); return; }
+    var plugin = ROUTE_PLUGIN[mode] || "AMap.Riding";
+    loadAMap().then(function(AMap){
+      AMap.plugin([plugin], function(){
+        clearRoute(map);
+        var inst;
+        if(plugin==="AMap.Transfer"){
+          inst = new AMap.Transfer({map:map, city:CITY, cityd:CITY, hideMarkers:true, autoFitView:false});
+        }else if(plugin==="AMap.Driving"){
+          inst = new AMap.Driving({map:map, hideMarkers:true, autoFitView:false});
+        }else if(plugin==="AMap.Walking"){
+          inst = new AMap.Walking({map:map, hideMarkers:true, autoFitView:false});
+        }else{
+          inst = new AMap.Riding({map:map, hideMarkers:true, autoFitView:false});
+        }
+        map.__routeInst = inst;
+        inst.search([from.lng, from.lat], [to.lng, to.lat], function(status, result){
+          if(status !== "complete"){ errCb("没找到"+mode+"路线，换个方式试试"); return; }
+          var mins = null, dist = null;
+          if(result.routes && result.routes.length){
+            mins = Math.round(result.routes[0].time/60); dist = result.routes[0].distance;
+          }else if(result.plans && result.plans.length){
+            mins = Math.round(result.plans[0].time/60); dist = result.plans[0].distance;
+          }
+          if(mins==null){ errCb("这条路算不出时间，换个方式试试"); return; }
+          try{ map.setFitView(); }catch(e){}
+          cb(mins, dist);
+        });
+      });
+    }).catch(function(){ errCb("地图没加载出来，请检查网络"); });
+  }
+
+  /* 浏览器定位（需 HTTPS） */
+  function locateMe(cb, errCb){
+    if(!navigator.geolocation){ errCb("浏览器不支持定位"); return; }
+    if(location.protocol!=="https:" && location.hostname!=="localhost" && location.hostname!=="127.0.0.1"){
+      errCb("当前是 HTTP 访问，浏览器不允许定位；给站点配好 HTTPS 后即可，或直接点地图打点");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      function(p){ cb(p.coords.longitude, p.coords.latitude); },
+      function(){ errCb("定位失败，可能没授权或信号弱，可直接点地图打点"); },
+      {enableHighAccuracy:true, timeout:8000, maximumAge:0}
+    );
+  }
+
+  /* ================= 备份 / 恢复 ================= */
+  function blobToDataURL(blob){
+    return new Promise(function(res, rej){
+      var r = new FileReader();
+      r.onload = function(){ res(r.result); };
+      r.onerror = function(){ rej(r.error); };
+      r.readAsDataURL(blob);
+    });
+  }
+  function dataURLToBlob(d){
+    var parts = String(d).split(","), mime = (parts[0].match(/:(.*?);/)||[])[1] || "image/jpeg";
+    var bin = atob(parts[1]||"");
+    var arr = new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], {type:mime});
+  }
+  function exportBackup(){
+    toast("正在打包…");
+    var pics = [];
+    openPhotoDB().then(function(db){
+      return new Promise(function(res){
+        var rq = db.transaction("pics").objectStore("pics").getAll();
+        rq.onsuccess = function(){ res(rq.result||[]); };
+        rq.onerror = function(){ res([]); };
+      });
+    }).catch(function(){ return []; }).then(function(rows){
+      return Promise.all(rows.map(function(r){
+        return blobToDataURL(r.blob).then(function(d){
+          pics.push({id:r.id, flatId:r.flatId, data:d});
+        });
+      }));
+    }).then(function(){
+      var payload = {app:"扫楼打分本", version:1, exportedAt:new Date().toISOString(), data:state, pics:pics};
+      var blob = new Blob([JSON.stringify(payload)], {type:"application/json"});
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      var d = new Date();
+      a.download = "扫楼打分本备份-" + d.getFullYear() + ("0"+(d.getMonth()+1)).slice(-2) + ("0"+d.getDate()).slice(-2) + ".json";
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+      toast("已导出备份（含 "+pics.length+" 张照片）");
+    }).catch(function(){ toast("导出失败，请重试"); });
+  }
+  function importBackup(file){
+    var fr = new FileReader();
+    fr.onload = function(){
+      var obj;
+      try{ obj = JSON.parse(fr.result); }catch(e){ toast("文件格式不对，不是备份文件"); return; }
+      if(!obj || !obj.data || !Array.isArray(obj.data.flats)){ toast("文件格式不对，不是备份文件"); return; }
+      var n = obj.data.flats.length, pn = (obj.pics||[]).length;
+      if(!confirm("将导入 "+n+" 套房、"+pn+" 张照片，覆盖当前手机上的全部记录。\n\n确定继续？（当前数据会被替换）")) return;
+      var st = obj.data;
+      state.flats = st.flats;
+      state.settings = defSettings();
+      if(st.settings){
+        if(Number(st.settings.budget)>0) state.settings.budget = Math.round(Number(st.settings.budget));
+        if(st.settings.weights) WKEYS.forEach(function(k){
+          if(Number(st.settings.weights[k])>=0) state.settings.weights[k] = Number(st.settings.weights[k])||0;
+        });
+      }
+      save();
+      var jobs = (obj.pics||[]).map(function(p){
+        try{ return photoPut(p.id, p.flatId, dataURLToBlob(p.data)); }catch(e){ return Promise.resolve(); }
+      });
+      Promise.all(jobs).then(function(){
+        Object.keys(photoURLCache).forEach(function(k){ try{URL.revokeObjectURL(photoURLCache[k]);}catch(e){} delete photoURLCache[k]; });
+        go("#list"); render(); toast("已恢复 "+n+" 套房、"+pn+" 张照片");
+      });
+    };
+    fr.onerror = function(){ toast("读取文件失败"); };
+    fr.readAsText(file);
+  }
+
+  /* 公司位置地图（评分设置内） */
+  var coMap = null;
+  function renderCompanyMap(){
+    var box = $("#companyMap");
+    if(!box) return;
+    var mk = [];
+    if(state.settings.company) mk.push({lng:state.settings.company.lng, lat:state.settings.company.lat, label:"司", kind:"company", zIndex:300});
+    drawMap(box, {
+      center: state.settings.company ? [state.settings.company.lng, state.settings.company.lat] : null,
+      zoom: 15, markers: mk,
+      onPick: function(lng, lat, map){
+        state.settings.company = {lng:lng, lat:lat};
+        save();
+        var h = $("#coHint");
+        if(h) h.textContent = "已标点："+lng.toFixed(5)+", "+lat.toFixed(5);
+        coMap = map;
+        renderCompanyMap();
+        toast("公司位置已保存");
+      }
+    });
+    var lb = $("#coLocBtn");
+    if(lb) lb.onclick=function(){
+      locateMe(function(lng, lat){
+        state.settings.company = {lng:lng, lat:lat}; save();
+        if(coMap) coMap.setCenter([lng, lat]);
+        renderCompanyMap(); toast("已用当前位置标公司");
+      }, function(msg){ toast(msg); });
+    };
+    var sb = $("#coSearchBtn");
+    if(sb) sb.onclick=function(){
+      var kw = prompt("搜索公司/地点名称：", "");
+      if(!kw || !kw.trim()) return;
+      loadAMap().then(function(AMap){
+        AMap.plugin("AMap.PlaceSearch", function(){
+          var ps = new AMap.PlaceSearch({city:CITY, pageSize:1, citylimit:true});
+          ps.search(kw.trim(), function(status, result){
+            var poi = result && result.poiList && result.poiList.pois && result.poiList.pois[0];
+            if(status==="complete" && poi && poi.location){
+              var lng = poi.location.getLng(), lat = poi.location.getLat();
+              state.settings.company = {lng:lng, lat:lat}; save();
+              if(coMap) coMap.setCenter([lng, lat]);
+              renderCompanyMap();
+              toast("已定位到："+poi.name);
+            }else{ toast("没搜到，换个关键词或直接点地图"); }
+          });
+        });
+      }).catch(function(){ toast("地图没加载出来，请检查网络"); });
+    };
+  }
 
   /* ================= 路由 ================= */
   function go(hash){ location.hash = hash; }
@@ -353,33 +976,104 @@
   window.addEventListener("hashchange", render);
 
   /* ================= 视图：列表 ================= */
+  var listFilter = "", listView = "list";
   function renderList(){
-    var flats = state.flats.slice().sort(function(a,b){return calc(b).score-calc(a).score;});
-    var inBudget = flats.filter(function(f){return (Number(f.rent)||0)<=BUDGET && Number(f.rent)>0;}).length;
+    var B = state.settings.budget, W = state.settings.weights;
+    var all = state.flats.slice();
+    var flats = all.filter(function(f){ return !listFilter || (f.status||"")===listFilter; })
+                    .sort(function(a,b){return calc(b).score-calc(a).score;});
+    var inBudget = flats.filter(function(f){return (Number(f.rent)||0)<=B && Number(f.rent)>0;}).length;
     var app=$("#app");
     var html = ''
       + '<header class="gh-top"><div class="gh-top-in">'
-      +   '<div class="brand">'+HOUSE(18)+'<h1>扫楼打分本</h1></div>'
+      +   '<div class="brand">'+ICON(19,"#fff")+'<h1>扫楼打分本</h1></div>'
       +   '<button class="btn btn-primary" id="addBtn">＋ 添加本次看房</button>'
       + '</div></header>'
       + '<div class="repo-desc">城中村看房实时评分对比 · 数据保存在本机浏览器，不上传服务器</div>'
+      + (hasDemo()? '<div class="demo-bar">'
+          + '<span class="t"><b>下面 4 套是示例</b>，从最好到最差各一档，看看打分怎么来的、卡片怎么看。删掉它们就能开始记自己的房。</span>'
+          + '<button class="btn btn-sm" id="clearDemoBtn">清空示例，开始使用</button>'
+          + '</div>' : '')
       + '<div class="box stats">'
-      +   '<div class="stat"><div class="n mono">'+flats.length+'</div><div class="l">已看房（套）</div></div>'
-      +   '<div class="stat"><div class="n mono" style="color:var(--success)">'+inBudget+'</div><div class="l">月租 ≤ '+BUDGET+' 元</div></div>'
+      +   '<div class="stat"><div class="n mono">'+all.length+'</div><div class="l">已看房（套）</div></div>'
+      +   '<div class="stat"><div class="n mono" style="color:var(--success)">'+inBudget+'</div><div class="l">月租 ≤ '+B+' 元</div></div>'
       +   (flats.length? '<div class="stat"><div class="n mono" style="color:'+gradeColor(calc(flats[0]).score)+'">'+calc(flats[0]).score+'</div><div class="l">当前最高分</div></div>'
                        : '<div class="stat"><div class="n mono">—</div><div class="l">当前最高分</div></div>')
       + '</div>'
+      + (all.length? '<div class="filters">'
+          + '<button class="chip'+(listFilter===""?" on":"")+'" data-filter="">全部 <span class="mono">'+all.length+'</span></button>'
+          + STATUSES.filter(function(s){return s[0];}).map(function(s){
+              var n = all.filter(function(f){return (f.status||"")===s[0];}).length;
+              return '<button class="chip'+(listFilter===s[0]?" on":"")+'" data-filter="'+s[0]+'">'+s[1]+' <span class="mono">'+n+'</span></button>';
+            }).join("")
+          + '</div>'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:13px;flex-wrap:wrap;">'
+          +   '<div class="viewtabs">'
+          +     '<button class="'+(listView==="list"?"on":"")+'" data-view="list">列表</button>'
+          +     '<button class="'+(listView==="map"?"on":"")+'" data-view="map">地图分布</button>'
+          +   '</div>'
+          +   '<span class="set-hint" style="margin:0;">'+(listView==="map"?"点标记看该房详情":"按综合分排名")+'</span>'
+          + '</div>' : '')
       + '<details class="box rules"><summary>'+CHEV+'打分规则与使用说明</summary><div class="rb">'
-      +   '每看一套房就录一张卡，边问边填，<b>分数实时计算、自动保存在本手机浏览器</b>，回到列表按综合分自动排名。满分 100：<b>租金 25 分</b>（450 元内满分、越贵越低）、<b>通勤 10 分</b>（骑车 10 分钟内满分）、<b>水电合理度 10 分</b>（民用电 0.59–0.65 元/度满分，1.2 元以上近乎 0 分并自动扣分）、<b>硬件齐全度 25 分</b>（19 项硬件勾选占比）、<b>主观印象 30 分</b>（4 项各 1–5 分）；<b>风险项扣分</b>：二房东/暗间各 −8，顶楼/一楼各 −5，电费超 1.2 再 −6。月总成本＝月租＋电单价×预估用电＋水单价×预估用水＋公摊＋网费。'
+      +   '每看一套房就录一张卡，边问边填，<b>分数实时计算、自动保存在本手机浏览器</b>，回到列表按综合分自动排名。满分 100（各项权重默认如下，可在下方「评分设置」里调整）：<b>租金 25 分</b>（450 元内满分、越贵越低）、<b>通勤 10 分</b>（按方式折算：骑车 10 分钟、步行/电动车 15 分钟、开车 20 分钟、公交地铁 30 分钟内满分，越久越低）、<b>水电合理度 10 分</b>（民用电 0.59–0.65 元/度满分，1.2 元以上近乎 0 分并自动扣分）、<b>硬件齐全度 25 分</b>（19 项硬件勾选占比）、<b>主观印象 30 分</b>（4 项各 1–5 分）；<b>风险项扣分</b>：二房东/暗间各 −8，顶楼/一楼各 −5，电费超 1.2 再 −6。月总成本＝月租＋电单价×预估用电＋水单价×预估用水＋公摊＋网费。'
+      + '</div></details>'
+      + '<details class="box rules" id="settingsBox"><summary>'+CHEV+'评分设置 · 预算 <span class="mono">'+B+'</span> 元 · 权重可调</summary><div class="rb">'
+      +   '<div class="set-block"><div class="set-label">月租预算（元/月）</div>'
+      +   '<input type="number" inputmode="numeric" class="set-num mono" id="setBudget" value="'+B+'">'
+      +   '<div class="set-hint">只用于「超预算」判定和顶部统计，不影响分数高低。</div></div>'
+      +   '<div class="set-block"><div class="set-label">各项权重（改动后自动按比例折算为合计 100）</div>'
+      +   '<div class="set-grid" id="wGrid">'+ WNAMES.map(function(x){
+            return '<label class="set-item">'+x[1]+'<input type="number" inputmode="decimal" class="mono" data-w="'+x[0]+'" value="'+W[x[0]]+'"></label>';
+          }).join('') +'</div>'
+      +   '<div class="set-hint">权重决定各项目在总分里的占比，排序和得分构成条会跟着变。</div></div>'
+      +   '<div class="set-block"><div class="set-label">公司位置（用于地图对比与直线距离）</div>'
+      +   '<div class="map-box" id="companyMap"><div class="map-loading">正在加载地图…</div></div>'
+      +   '<div class="map-actions">'
+      +     '<button type="button" class="btn btn-sm" id="coLocBtn">📍 用当前位置</button>'
+      +     '<button type="button" class="btn btn-sm" id="coSearchBtn">🔍 搜索地点</button>'
+      +   '</div>'
+      +   '<div class="map-tip" id="coHint">'+(state.settings.company? "已标点："+state.settings.company.lng.toFixed(5)+", "+state.settings.company.lat.toFixed(5) : "点地图标出公司位置（只影响地图视图，不影响打分）")+'</div></div>'
+      +   '<div class="set-label" style="margin-top:12px;">快捷预设</div>'
+      +   '<div class="set-presets">'+ PRESETS.map(function(p,i){
+            return '<button type="button" class="btn btn-sm" data-preset="'+i+'">'+p[0]+'</button>';
+          }).join("") +'<button type="button" class="btn btn-sm" id="wReset">恢复默认</button></div>'
+      + '</div></details>'
+      + '<details class="box rules" id="backupBox"><summary>'+CHEV+'数据备份与恢复</summary><div class="rb">'
+      +   '<div class="set-hint" style="margin-top:0;">所有记录和照片只存在这台手机的浏览器里。导出备份会生成一个文件（含照片），可以发到微信文件传输助手存着；换手机或清缓存后用它恢复。</div>'
+      +   '<div class="set-presets" style="margin-top:12px;">'
+      +     '<button type="button" class="btn btn-sm" id="exportBtn">导出备份文件</button>'
+      +     '<button type="button" class="btn btn-sm" id="importBtn">从备份文件恢复</button>'
+      +     '<button type="button" class="btn btn-sm" id="reloadDemoBtn">重新载入示例</button>'
+      +   '</div>'
+      +   '<input type="file" id="importInput" accept="application/json,.json" style="display:none;">'
       + '</div></details>';
 
     if(!flats.length){
       html += '<div class="box blankslate">'
-        + HOUSE(48,"#818b98")
-        + '<h3>还没有看房记录</h3>'
-        + '<p>进村看完第一套房，点右上角「添加本次看房」。<br>边问房东边勾选，分数当场出来。</p>'
+        + '<div style="display:flex;justify-content:center;">'+ICON(52,"#818b98")+'</div>'
+        + (all.length? '<h3>这个状态下还没有房</h3><p>换一个筛选，或给房子打上状态标记。</p>'
+                      : '<h3>还没有看房记录</h3><p>进村看完第一套房，点右上角「添加本次看房」。<br>边问房东边勾选，分数当场出来。</p>')
         + '<button class="btn btn-primary" id="addBtn2">＋ 添加本次看房</button>'
         + '</div>'
+        + '<div class="foot">评分与数据只保存在本机浏览器（localStorage）<br>换手机或清除浏览器数据不会同步</div>';
+    }else if(listView==="map"){
+      var mapped = flats.filter(function(f){return f.loc && f.loc.lng!=null;});
+      html += '<div class="box"><div class="box-head"><span>地图分布</span><span class="hint">'+mapped.length+'/'+flats.length+' 套已标点</span></div>'
+        + '<div class="box-body"><div class="map-box big" id="listMap"><div class="map-loading">正在加载地图…</div></div>'
+        + '<div class="map-actions"><button type="button" class="btn btn-sm" id="clearRouteBtn">清除路线</button>'
+        +   '<span class="set-hint" style="margin:0;align-self:center;">点标记即可显示该房到公司的'+(state.settings.company?'导航路线':'详情')+'</span></div>'
+        + '<div class="map-tip">'+(state.settings.company? '蓝点是公司位置。' : '还没标公司位置，去「评分设置 → 公司位置」标一下，就能看每套房到公司的直线距离和导航路线。')+'</div>'
+        + '</div></div>'
+        + (mapped.length? '<div class="box" style="margin-top:12px;"><div class="box-head"><span>到公司直线距离</span></div><div class="box-body costrows">'
+            + mapped.slice().sort(function(a,b){
+                var da=distance(a.loc,state.settings.company), db=distance(b.loc,state.settings.company);
+                return (da==null?1e9:da)-(db==null?1e9:db);
+              }).map(function(f){
+                var d = distance(f.loc, state.settings.company);
+                var r = calc(f);
+                return '<div class="row"><span>'+(esc(f.title)||esc(f.village)||"未命名")+' <span class="mono">'+r.score+'分</span></span><span class="v mono">'+(d==null?"—":fmtDist(d))+'</span></div>';
+              }).join("")
+            + '</div></div>' : '')
         + '<div class="foot">评分与数据只保存在本机浏览器（localStorage）<br>换手机或清除浏览器数据不会同步</div>';
     }else{
       flats.forEach(function(f,i){
@@ -389,17 +1083,25 @@
         if(f.htype) meta.push(esc(f.htype));
         if(f.area) meta.push(esc(f.area)+'㎡');
         if(f.floor||f.totalFloor) meta.push((f.floor||"?")+"/"+(f.totalFloor||"?")+"层"+(f.lift?"·电梯":"·步梯"));
-        if(f.commuteMin) meta.push("骑车 "+esc(f.commuteMin)+" 分");
+        if(f.commuteMin) meta.push(esc(f.commuteMode||"骑车")+" "+esc(f.commuteMin)+" 分");
+        var dm = distance(f.loc, state.settings.company);
+        if(dm!=null) meta.push("距公司 "+fmtDist(dm));
         var segs = segParts(r);
+        /* 默认标题 = 村名+门牌号（填了自定义房名则用房名） */
+        var nameHtml = esc(f.title) || ((esc(f.village)+esc(f.addr)) || "<span style='color:var(--faint);font-weight:400;'>未命名</span>");
         html += '<div class="box flat'+(i===0?' best':'')+'">'
           + '<div class="box-head flat-head">'
           +   (i===0? '<span class="label lb-success">当前最优选</span>' : '<span class="counter">NO.'+(i+1)+'</span>')
           +   '<span class="score mono" style="color:'+gradeColor(r.score)+'">'+r.score+'<span class="of">/100</span></span>'
           + '</div>'
           + '<div class="box-body">'
-          +   '<div class="flat-title"><span class="flat-name" data-rename="'+f.id+'">'+(esc(f.title)||esc(f.village)||"<span style='color:var(--faint);font-weight:400;'>未命名</span>")+PEN+'</span><span class="label '+gradeLabel(r.score)+'">'+grade(r.score)+'</span></div>'
+          +   '<div class="flat-title"><span class="flat-name" data-rename="'+f.id+'">'+nameHtml+PEN+'</span><span class="label '+gradeLabel(r.score)+'">'+grade(r.score)+'</span>'
+          +     (f.status? '<span class="label '+ST_CLASS[f.status]+'">'+ST_LABEL[f.status]+'</span>':'')
+          +     (f.demo? '<span class="label lb-demo">示例</span>':'')
+          +   '</div>'
           +   (meta.length? '<div class="meta">'+meta.join(" · ")+'</div>':'')
-          +   (f.addr? '<div class="meta" style="color:var(--faint);">'+esc(f.addr)+'</div>':'')
+          +   (f.title&&f.addr? '<div class="meta" style="color:var(--faint);">'+esc(f.addr)+'</div>':'')
+          +   ((f.photos&&f.photos.length)? '<div class="photo-strip" data-flat="'+f.id+'"></div>':'')
           +   '<div class="segbar">'+ segs.map(function(s){
                 return '<span style="width:'+Math.max(0,Math.min(100,s.v)).toFixed(1)+'%;background:'+s.color+'" title="'+s.name+' '+s.v.toFixed(1)+' / '+s.max+'"></span>';
               }).join("") + '</div>'
@@ -411,8 +1113,12 @@
           + '<div class="box-foot">'
           +   '<span class="cost mono '+(r.budgetOver?'over':'in')+'">月租 ¥'+(f.rent||0)+'</span>'
           +   '<span class="cost2 mono">预估月总成本 ¥'+r.monthCost+'（含水电）</span>'
+          +   (Number(f.rent)>0? '<span class="cost2 mono">首月需付 ¥'+firstCost(f).total+'（押'+ (Number(f.deposit)||1) +'付一'+(firstCost(f).broker?"+中介":"") +'）</span>':'')
           +   '<span class="cost2">硬件 '+r.got+'/'+r.total+'</span>'
           +   '<div class="acts">'
+          +     '<select class="status-sel" data-status="'+f.id+'">'+ STATUSES.map(function(s){
+                return '<option value="'+s[0]+'" '+((f.status||"")===s[0]?"selected":"")+'>'+s[1]+'</option>';
+              }).join("") +'</select>'
           +     '<button class="btn btn-sm" data-edit="'+f.id+'">编辑</button>'
           +     '<button class="btn btn-sm" data-copy="'+f.id+'">复制摘要</button>'
           +     '<button class="btn btn-sm btn-danger" data-del="'+f.id+'">删除</button>'
@@ -427,7 +1133,11 @@
     app.querySelectorAll("[data-edit]").forEach(function(b){ b.onclick=function(){ go("#edit?id="+this.getAttribute("data-edit")); }; });
     app.querySelectorAll("[data-del]").forEach(function(b){ b.onclick=function(){
       var id=this.getAttribute("data-del");
-      if(confirm("确定删除这套看房记录？")){ state.flats = state.flats.filter(function(x){return x.id!==id;}); save(); render(); toast("已删除"); }
+      if(confirm("确定删除这套看房记录？")){
+        var victim=state.flats.filter(function(x){return x.id===id;})[0];
+        if(victim&&victim.photos&&victim.photos.length) photoDel(victim.photos);
+        state.flats = state.flats.filter(function(x){return x.id!==id;}); save(); render(); toast("已删除");
+      }
     };});
     app.querySelectorAll("[data-copy]").forEach(function(b){ b.onclick=function(){
       var f = state.flats.filter(function(x){return x.id===this.getAttribute("data-copy");}.bind(this))[0];
@@ -437,18 +1147,125 @@
       var id=this.getAttribute("data-rename");
       var f = state.flats.filter(function(x){return x.id===id;})[0];
       if(!f) return;
-      var name = prompt("改个自己好认的房名（留空则显示村名）：", f.title||"");
+      var name = prompt("改个自己好认的房名（留空则显示村名+门牌）：", f.title||"");
       if(name===null) return;
       f.title = name.trim(); save(); render();
       if(f.title) toast("已改名："+f.title);
     };});
+
+    /* 评分设置绑定 */
+    var sb=$("#settingsBox");
+    if(sb){
+      sb.open = settingsOpen;
+      sb.addEventListener("toggle",function(){ settingsOpen = this.open; });
+    }
+    function afterSet(){ save(); rerenderList(); toast("评分设置已生效"); }
+    var bi=$("#setBudget");
+    if(bi) bi.onchange=function(){
+      var v=Math.max(0,Math.round(Number(this.value)||0));
+      state.settings.budget = v>0 ? v : 700;
+      afterSet();
+    };
+    var wg=$("#wGrid");
+    if(wg) wg.querySelectorAll("[data-w]").forEach(function(inp){
+      inp.onchange=function(){
+        var w={};
+        wg.querySelectorAll("[data-w]").forEach(function(x){ w[x.getAttribute("data-w")]=Math.max(0,Math.min(100,Number(x.value)||0)); });
+        state.settings.weights = normalizeW(w);
+        afterSet();
+      };
+    });
+    app.querySelectorAll("[data-preset]").forEach(function(btn){
+      btn.onclick=function(){
+        state.settings.weights = Object.assign({},PRESETS[Number(this.getAttribute("data-preset"))][1]);
+        afterSet();
+      };
+    });
+    var wr=$("#wReset");
+    if(wr) wr.onclick=function(){
+      state.settings.weights = Object.assign({},DEFAULT_W);
+      state.settings.budget = 700;
+      afterSet();
+    };
+
+    /* 状态筛选 */
+    app.querySelectorAll("[data-filter]").forEach(function(b){
+      b.onclick=function(){ listFilter = this.getAttribute("data-filter"); rerenderList(); };
+    });
+    /* 列表 / 地图 切换 */
+    app.querySelectorAll("[data-view]").forEach(function(b){
+      b.onclick=function(){ listView = this.getAttribute("data-view"); rerenderList(); };
+    });
+    /* 地图视图渲染 */
+    var lm = $("#listMap");
+    if(lm){
+      var mk = [];
+      if(state.settings.company) mk.push({lng:state.settings.company.lng, lat:state.settings.company.lat, label:"司", kind:"company", zIndex:300, info:'<div class="amap-info-content"><b>公司</b></div>'});
+      var ordered = flats.slice().sort(function(a,b){return calc(b).score-calc(a).score;});
+      ordered.forEach(function(f, i){
+        if(!f.loc || f.loc.lng==null) return;
+        var r = calc(f);
+        var d = distance(f.loc, state.settings.company);
+        mk.push({
+          lng:f.loc.lng, lat:f.loc.lat, label:String(i+1),
+          info:'<div class="amap-info-content"><b>'+(esc(f.title)||esc(f.village)||"未命名")+'</b>'
+             + '<div class="r">综合 '+r.score+' 分 · '+grade(r.score)+'</div>'
+             + '<div class="r">月租 ¥'+(f.rent||0)+' · 首月 ¥'+firstCost(f).total+'</div>'
+             + (f.commuteMin? '<div class="r">'+(f.commuteMode||"骑车")+' '+(f.commuteMin)+' 分钟</div>':'')
+             + (d!=null? '<div class="r">距公司 '+fmtDist(d)+'（直线）</div>':'')
+             + (state.settings.company? '<div class="r" style="margin-top:5px;color:#0969da;font-weight:600;">↓ 已在地图上画出到公司的路线</div>':'')
+             + '</div>',
+          onClick: state.settings.company ? function(m, map){
+            var mode = f.commuteMode || "骑车";
+            toast("正在算"+mode+"路线…");
+            drawRoute(map, state.settings.company, f.loc, mode, function(mins, dist){
+              toast((f.title||f.village||"该房")+"：导航 "+mins+" 分钟"+(dist? "，"+fmtDist(dist):""));
+            }, function(msg){ toast(msg); });
+          } : null
+        });
+      });
+      var listMapInst = null;
+      drawMap(lm, {markers:mk, zoom: mapped.length? 13 : 12, onReady:function(map){ listMapInst = map; }});
+      var crb = $("#clearRouteBtn");
+      if(crb) crb.onclick=function(){ if(listMapInst){ clearRoute(listMapInst); toast("已清除路线"); } };
+    }
+    /* 评分设置里的公司位置 */
+    var cmb = $("#companyMap");
+    if(cmb) renderCompanyMap();
+    /* 状态标记下拉 */
+    app.querySelectorAll("[data-status]").forEach(function(sel){
+      sel.onchange=function(){
+        var id=this.getAttribute("data-status");
+        var f=state.flats.filter(function(x){return x.id===id;})[0];
+        if(!f) return;
+        f.status = this.value; save(); rerenderList();
+        if(f.status) toast("已标记："+ST_LABEL[f.status]);
+      };
+    });
+    /* 备份 / 恢复 */
+    var eb=$("#exportBtn"); if(eb) eb.onclick=exportBackup;
+    /* 示例清空 / 重载 */
+    var cdb=$("#clearDemoBtn"); if(cdb) cdb.onclick=function(){
+      if(confirm("清空这 4 套示例？你自己的记录不受影响。")) clearDemo();
+    };
+    var rdb=$("#reloadDemoBtn"); if(rdb) rdb.onclick=function(){ reloadDemo(); };
+    var ib=$("#importBtn"), ii=$("#importInput");
+    if(ib && ii){
+      ib.onclick=function(){ ii.click(); };
+      ii.onchange=function(){
+        var file=this.files && this.files[0]; this.value="";
+        if(file) importBackup(file);
+      };
+    }
+
+    hydrateListPhotos(app);
   }
 
   function summaryText(f){
     var r=calc(f);
     var L=[];
     L.push("【看房记录】"+(f.title||f.village||"未命名")+(f.title&&f.village?"（"+f.village+"）":"")+" "+(f.addr||""));
-    L.push(f.htype+" "+(f.area?f.area+"㎡ ":"")+(f.floor?f.floor+"/"+f.totalFloor+"层":"")+(f.lift?" 电梯":" 步梯")+" 骑车"+(f.commuteMin||"?")+"分钟");
+    L.push(f.htype+" "+(f.area?f.area+"㎡ ":"")+(f.floor?f.floor+"/"+f.totalFloor+"层":"")+(f.lift?" 电梯":" 步梯")+" "+(f.commuteMode||"骑车")+(f.commuteMin||"?")+"分钟");
     L.push("月租"+f.rent+"元 | 电"+(f.ePrice||"?")+"元/度 水"+(f.wPrice||"?")+"元/吨 | 预估月总成本"+r.monthCost+"元");
     L.push("硬件齐全 "+r.got+"/"+r.total+" | 综合评分 "+r.score+"（"+grade(r.score)+"）");
     if(f.phone) L.push("房东电话："+f.phone);
@@ -469,7 +1286,7 @@
   /* ================= 视图：编辑 ================= */
   var editing = null, editIsNew = false;
   function isBlank(f){
-    return !f.title && !f.village && !f.rent && !f.phone && !f.addr && !f.note
+    return !f.title && !f.village && !f.rent && !f.phone && !f.addr && !f.note && !(f.photos&&f.photos.length)
       && SUBJECTS.every(function(s){return !Number(f.scores[s[0]]);})
       && FEATURES.every(function(x){return !f.features[x[0]];})
       && RISKS.every(function(x){return !f.risks[x[0]];});
@@ -483,8 +1300,9 @@
     editing = id ? state.flats.filter(function(f){return f.id===id;})[0] : blankFlat();
     if(id && !editing){ go("#list"); return; }
     editIsNew = !id;
+    lastRoute = null;
     if(editIsNew){ state.flats.push(editing); save(); }
-    var headName = id ? ("编辑："+(esc(editing.title)||esc(editing.village)||"看房记录")) : "新增看房记录";
+    var headName = id ? ("编辑："+(esc(editing.title)||(esc(editing.village)+esc(editing.addr))||"看房记录")) : "新增看房记录";
     var app=$("#app");
     app.innerHTML =
       '<header class="gh-top"><div class="gh-top-in">'
@@ -492,11 +1310,15 @@
       + '<div class="edit-title">'+headName+'</div>'
       + '<button class="btn btn-primary" id="saveTop">保存</button>'
       + '</div></header>'
-      + '<div class="edit-grid"><div class="edit-main" id="editMain"></div><div class="live-panel" id="livePanel"></div></div>';
+      + '<div class="edit-grid"><div class="edit-main" id="editMain"></div><div class="live-panel" id="livePanel"></div></div>'
+      + (editing && editing.demo ? '<div class="demo-bar" style="margin-top:12px;"><span class="t">这是<b>示例数据</b>，可以随便改着玩；确认看懂后回列表点「清空示例」即可。</span></div>' : '');
 
     $("#editMain").innerHTML = formHTML(editing);
     bindForm();
     renderLive();
+    bindPhotoInput();
+    renderPhotoGrid();
+    renderEditMap();
     $("#backBtn").onclick=function(){ dropIfBlankNew(); go("#list"); };
     $("#saveTop").onclick=function(){
       if(editIsNew && isBlank(editing)){ dropIfBlankNew(); toast("内容为空，未保存"); go("#list"); return; }
@@ -511,7 +1333,7 @@
     var h = '';
     /* 基本信息 */
     h += '<section class="box panel"><div class="box-head"><span>基本信息</span><span class="hint">问房东 / 看门牌</span></div><div class="box-body">'
-      + '<div class="field full" style="margin-bottom:12px;"><label>自定义房名（列表标题就是它，也可在列表点房名直接改）</label><input data-k="title" value="'+esc(f.title||"")+'" placeholder="起个好认的名字，如：弼塘西便3楼朝南单间；留空则显示村名"></div>'
+      + '<div class="field full" style="margin-bottom:12px;"><label>自定义房名（列表标题就是它，也可在列表点房名直接改）</label><input data-k="title" value="'+esc(f.title||"")+'" placeholder="起个好认的名字，如：弼塘西便3楼朝南单间；留空则显示村名+门牌"></div>'
       + '<div class="fgrid">'
       + '<div class="field"><label>村名 *</label><input data-k="village" value="'+esc(f.village)+'" placeholder="如：弼塘村 / 大沙第南" list="vlist"><datalist id="vlist">'+
           ["弼塘村","简村村","河宕村","青柯村","莘冈村","海口村","大沙村","古灶村","村头村","村尾村","大富村","白坭村","张槎村","大江村","下朗村","上朗村","莲塘村"].map(function(v){return '<option value="'+v+'">';}).join("")+'</datalist></div>'
@@ -524,8 +1346,35 @@
       + '<div class="field"><label>楼型</label><select data-k="lift"><option value="false" '+(f.lift?"":"selected")+'>步梯</option><option value="true" '+(f.lift?"selected":"")+'>电梯</option></select></div>'
       + '<div class="field"><label>朝向</label><select data-k="orient">'+ORIENTS.map(function(x){return '<option '+(f.orient===x?"selected":"")+'>'+x+'</option>';}).join("")+'</select></div>'
       + '<div class="field"><label>位置</label><select data-k="roadside"><option '+(f.roadside==="巷内"?"selected":"")+'>巷内</option><option '+(f.roadside==="路边"?"selected":"")+'>路边</option></select></div>'
-      + numField("commuteMin","到公司骑程","分钟")
+      + '<div class="field"><label>通勤方式</label><select data-k="commuteMode">'+CMODES.map(function(x){return '<option '+((f.commuteMode||"骑车")===x?"selected":"")+'>'+x+'</option>';}).join("")+'</select></div>'
+      + numField("commuteMin","到公司耗时","分钟")
+      + '<div class="field"><label>状态</label><select data-k="status">'+ STATUSES.map(function(s){
+            return '<option value="'+s[0]+'" '+((f.status||"")===s[0]?"selected":"")+'>'+s[1]+'</option>';
+          }).join("") +'</select></div>'
       + '</div></div></section>';
+
+    /* 位置打点 */
+    h += '<section class="box panel"><div class="box-head"><span>位置</span><span class="hint" id="locHint">'+(f.loc? (f.loc.lng.toFixed(5)+", "+f.loc.lat.toFixed(5)) : "未标点")+'</span></div>'
+      + '<div class="box-body">'
+      +   '<div class="map-box" id="editMap"><div class="map-loading">正在加载地图…</div></div>'
+      +   '<div class="map-actions">'
+      +     '<button type="button" class="btn btn-sm" id="locMeBtn">📍 用当前位置</button>'
+      +     '<button type="button" class="btn btn-sm" id="locSearchBtn">🔍 按村名搜索</button>'
+      +     (f.loc? '<button type="button" class="btn btn-sm btn-danger" id="locClearBtn">清除标点</button>':'')
+      +   '</div>'
+      +   (f.loc&&state.settings.company? '<div class="map-actions">'
+      +     '<button type="button" class="btn btn-sm btn-primary" id="routeBtn">🚏 显示到公司路线（'+(f.commuteMode||"骑车")+'）</button>'
+      +     '<button type="button" class="btn btn-sm" id="applyRouteBtn" style="display:none;">✓ 用路线时间修正通勤</button>'
+      +     '<button type="button" class="btn btn-sm" id="hideRouteBtn">隐藏路线</button>'
+      +   '</div>':'')
+      +   '<div class="map-tip">点地图直接标位置；到公司直线距离：<b id="locDist">'+(f.loc&&state.settings.company? fmtDist(distance(f.loc, state.settings.company)) : "先在「评分设置」里标公司位置")+'</b><span id="routeInfo"></span></div>'
+      + '</div></section>';
+
+    /* 现场照片 */
+    h += '<section class="box panel"><div class="box-head"><span>现场照片</span><span class="hint">最多 9 张 · 已拍 <span id="photoCount">0/9</span></span></div>'
+      + '<div class="box-body"><div class="photogrid" id="photoGrid"></div>'
+      + '<input type="file" id="photoInput" accept="image/*" multiple style="display:none;">'
+      + '<div class="set-hint">照片只存在本机浏览器（IndexedDB），不上传；删除记录时会一并删除。</div></div></section>';
 
     /* 费用 */
     h += '<section class="box panel"><div class="box-head"><span>费用明细</span><span class="hint">逐项写死，口头不算</span></div><div class="box-body"><div class="fgrid">'
@@ -538,6 +1387,7 @@
       + numField("wTon","预估月用水","吨")
       + numField("sharedFee","月公摊/卫生费","元")
       + numField("netFee","月网费","元")
+      + numField("brokerFee","中介费（选填）","元")
       + '</div><div class="fieldnote">佛山居民一档电价约 0.59 元/度；城中村常见加价到 1.3–1.5，水费常见 5 元/吨。预估用电默认 120 度（常开空调可调到 180–220）。</div></div></section>';
 
     /* 硬件 */
@@ -606,8 +1456,164 @@
     var cb=$("#copyBtn"); if(cb) cb.onclick=function(){ copySummary(editing); };
   }
 
+  /* ================= 编辑页地图 ================= */
+  var editMap = null, editAMap = null, lastRoute = null;
+  function setLoc(lng, lat){
+    editing.loc = {lng:lng, lat:lat};
+    save();
+    var hint = $("#locHint");
+    if(hint) hint.textContent = lng.toFixed(5)+", "+lat.toFixed(5);
+    var dEl = $("#locDist");
+    if(dEl) dEl.textContent = state.settings.company ? fmtDist(distance(editing.loc, state.settings.company)) : "先在「评分设置」里标公司位置";
+  }
+  function renderEditMap(){
+    var box = $("#editMap");
+    if(!box) return;
+    if(editMap){ try{ editMap.destroy(); }catch(e){} editMap = null; }
+    var markers = [];
+    if(editing.loc) markers.push({lng:editing.loc.lng, lat:editing.loc.lat, label:"房", kind:"pick", zIndex:200});
+    if(state.settings.company) markers.push({lng:state.settings.company.lng, lat:state.settings.company.lat, label:"司", kind:"company"});
+    drawMap(box, {
+      center: editing.loc ? [editing.loc.lng, editing.loc.lat] : null,
+      zoom: 16,
+      markers: markers,
+      onReady: function(map){ editMap = map; },
+      onPick: function(lng, lat, map){
+        setLoc(lng, lat);
+        renderEditMap();
+      }
+    });
+    var mb = $("#locMeBtn");
+    if(mb) mb.onclick=function(){
+      locateMe(function(lng, lat){
+        setLoc(lng, lat);
+        if(editMap) editMap.setCenter([lng, lat]);
+        renderEditMap();
+        toast("已用当前位置标点");
+      }, function(msg){ toast(msg); });
+    };
+    var sb = $("#locSearchBtn");
+    if(sb) sb.onclick=function(){
+      var kw = prompt("搜索地点（村名/路名/小区）：", (editing.village||"")+(editing.addr||""));
+      if(!kw || !kw.trim()) return;
+      loadAMap().then(function(AMap){
+        AMap.plugin("AMap.PlaceSearch", function(){
+          var ps = new AMap.PlaceSearch({city:CITY, pageSize:1, citylimit:true});
+          ps.search(kw.trim(), function(status, result){
+            var poi = result && result.poiList && result.poiList.pois && result.poiList.pois[0];
+            if(status==="complete" && poi && poi.location){
+              var lng = poi.location.getLng(), lat = poi.location.getLat();
+              setLoc(lng, lat);
+              if(editMap) editMap.setCenter([lng, lat]);
+              renderEditMap();
+              toast("已定位到："+poi.name);
+            }else{
+              toast("没搜到，换个关键词或直接点地图");
+            }
+          });
+        });
+      }).catch(function(){ toast("地图没加载出来，请检查网络"); });
+    };
+    var cb = $("#locClearBtn");
+    if(cb) cb.onclick=function(){ editing.loc = null; save(); renderEditMap(); toast("已清除标点"); };
+
+    /* 路线轨迹 + 修正通勤 */
+    var rb = $("#routeBtn");
+    if(rb) rb.onclick=function(){
+      var mode = editing.commuteMode || "骑车";
+      var fire = function(map){
+        toast("正在算"+mode+"路线…");
+        drawRoute(map, state.settings.company, editing.loc, mode, function(mins, dist){
+          lastRoute = {mins:mins, dist:dist, mode:mode};
+          var ri = $("#routeInfo");
+          if(ri) ri.innerHTML = ' · 导航 <b>'+mins+' 分钟</b>'+(dist? '（'+fmtDist(dist)+'）':'');
+          var ab2 = $("#applyRouteBtn");
+          if(ab2) ab2.style.display = "";
+          toast("路线已显示：" + mins + " 分钟");
+        }, function(msg){ toast(msg); });
+      };
+      if(editMap){ fire(editMap); return; }
+      /* 地图还在加载：等它就绪 */
+      var waited = 0;
+      var iv = setInterval(function(){
+        waited += 300;
+        if(editMap){ clearInterval(iv); fire(editMap); }
+        else if(waited > 8000){ clearInterval(iv); toast("地图加载超时，请检查网络后重试"); }
+      }, 300);
+    };
+    var hb = $("#hideRouteBtn");
+    if(hb) hb.onclick=function(){
+      if(editMap) clearRoute(editMap);
+      lastRoute = null;
+      var ri = $("#routeInfo"); if(ri) ri.textContent = "";
+      toast("已隐藏路线");
+    };
+    var ab = $("#applyRouteBtn");
+    if(ab) ab.onclick=function(){
+      if(!lastRoute){ toast("先点「显示到公司路线」算出时间"); return; }
+      editing.commuteMin = String(lastRoute.mins);
+      var inp = document.querySelector('[data-k="commuteMin"]');
+      if(inp) inp.value = lastRoute.mins;
+      save(); renderLive();
+      toast("通勤时间已修正为 " + lastRoute.mins + " 分钟（"+lastRoute.mode+"）");
+    };
+  }
+  /* ================= 编辑页照片管理 ================= */
+  function bindPhotoInput(){
+    var inp = $("#photoInput");
+    if(!inp) return;
+    inp.onchange = function(){
+      var files = Array.prototype.slice.call(this.files || []);
+      this.value = "";
+      if(!files.length) return;
+      var ids = photoIds(editing);
+      var slots = MAXPHOTOS - ids.length;
+      if(slots <= 0){ toast("每套最多 9 张"); return; }
+      if(files.length > slots){ files = files.slice(0, slots); toast("最多还能添加 "+slots+" 张，已截取前 "+slots+" 张"); }
+      toast("正在处理照片…");
+      Promise.all(files.map(function(f){
+        return compressImage(f).then(function(blob){
+          var pid = "p" + Date.now().toString(36) + Math.floor(Math.random()*9999);
+          return photoPut(pid, editing.id, blob).then(function(){ ids.push(pid); });
+        });
+      })).then(function(){
+        save(); renderPhotoGrid();
+        toast("照片已保存");
+      }).catch(function(){ toast("照片保存失败，请重试"); });
+    };
+  }
+  function renderPhotoGrid(){
+    var grid = $("#photoGrid"), cnt = $("#photoCount"), inp = $("#photoInput");
+    if(!grid) return;
+    var ids = photoIds(editing);
+    grid.innerHTML = "";
+    ids.forEach(function(id, ix){
+      var d = document.createElement("div"); d.className = "ph";
+      var im = new Image(); im.alt = "照片"+(ix+1);
+      im.onclick = function(){ openLightbox(ids, ix); };
+      d.appendChild(im);
+      var del = document.createElement("button");
+      del.type = "button"; del.className = "ph-del"; del.textContent = "✕"; del.setAttribute("aria-label","删除这张照片");
+      del.onclick = function(){
+        if(!confirm("删除这张照片？")) return;
+        ids.splice(ix,1); save(); photoDel([id]); renderPhotoGrid(); toast("已删除");
+      };
+      d.appendChild(del);
+      grid.appendChild(d);
+      photoURL(id).then(function(u){ if(u) im.src = u; else d.remove(); });
+    });
+    if(cnt) cnt.textContent = ids.length+"/"+MAXPHOTOS;
+    if(ids.length < MAXPHOTOS && inp){
+      var t = document.createElement("button");
+      t.type = "button"; t.className = "ph ph-add";
+      t.innerHTML = '<span class="plus">＋</span><span>拍照/相册</span>';
+      t.onclick = function(){ inp.click(); };
+      grid.appendChild(t);
+    }
+  }
+
   function renderLive(){
-    var f=editing, r=calc(f);
+    var f=editing, r=calc(f), B=state.settings.budget;
     var panel=$("#livePanel");
     var costRows=[
       ["月租",(Number(f.rent)||0)+" 元"],
@@ -616,14 +1622,23 @@
       ["公摊+网费",((Number(f.sharedFee)||0)+(Number(f.netFee)||0))+" 元"]
     ];
     var segs = segParts(r);
+    var fc = firstCost(f);
     panel.innerHTML =
       '<div class="box score-box"><div class="score-line"><span class="n mono" style="color:'+gradeColor(r.score)+'">'+r.score+'</span><span class="of mono">/ 100</span></div>'
-      + '<div class="g"><span class="label '+gradeLabel(r.score)+'">'+grade(r.score)+'</span></div>'
+      + '<div class="g"><span class="label '+gradeLabel(r.score)+'">'+grade(r.score)+'</span>'
+      +   (f.status? ' <span class="label '+ST_CLASS[f.status]+'">'+ST_LABEL[f.status]+'</span>':'')
+      + '</div>'
       + '<div class="progress"><span style="width:'+r.score+'%;background:'+gradeColor(r.score)+';"></span></div></div>'
       + '<div class="box"><div class="box-head"><span>费用预估</span></div><div class="box-body costrows">'
       +   costRows.map(function(x){return '<div class="row"><span>'+x[0]+'</span><span class="v mono">'+x[1]+'</span></div>';}).join("")
       +   '<div class="row total"><span>预估月总成本</span><span class="v mono">¥ '+r.monthCost+'</span></div>'
-      +   '<div class="flash '+(r.budgetOver?"over":"in")+'">'+(Number(f.rent)>0 ? (r.budgetOver? "月租已超 "+BUDGET+" 元预算":"月租在 "+BUDGET+" 元预算内"):"填了月租后判定预算")+'</div>'
+      +   '<div class="flash '+(r.budgetOver?"over":"in")+'">'+(Number(f.rent)>0 ? (r.budgetOver? "月租已超 "+B+" 元预算":"月租在 "+B+" 元预算内"):"填了月租后判定预算")+'</div>'
+      + '</div></div>'
+      + '<div class="box"><div class="box-head"><span>首月需付</span><span class="hint">押'+(Number(f.deposit)||1)+'付一'+(fc.broker?"+中介":"")+'</span></div><div class="box-body costrows">'
+      +   '<div class="row"><span>首月租金</span><span class="v mono">'+(fc.rent||0)+' 元</span></div>'
+      +   '<div class="row"><span>押金（'+(Number(f.deposit)||1)+' 个月）</span><span class="v mono">'+fc.deposit+' 元</span></div>'
+      +   (fc.broker? '<div class="row"><span>中介费</span><span class="v mono">'+fc.broker+' 元</span></div>':'')
+      +   '<div class="row total"><span>入住首月一次性支出</span><span class="v mono">¥ '+fc.total+'</span></div>'
       + '</div></div>'
       + '<div class="box"><div class="box-head"><span>得分构成</span><span class="hint">满分 100</span></div><div class="box-body">'
       +   '<div class="segbar" style="margin-top:2px;">'+ segs.map(function(s){
@@ -637,13 +1652,59 @@
       + '<div class="box"><div class="box-head"><span>实时提示</span></div><div class="box-body"><div class="live-warn">'+ r.warnings.map(function(w){return '<span class="label lb-'+WLB[w[0]]+'">'+w[1]+'</span>';}).join("") +'</div></div></div>';
   }
 
+  /* ================= 示例数据 ================= */
+  var demoLoaded = false;
+  function injectDemo(){
+    if(demoLoaded) return;
+    demoLoaded = true;
+    state.flats = demoFlats().concat(state.flats);
+    /* 给示例配一个公司位置，这样地图和距离一进去就能看到效果 */
+    if(!state.settings.company) state.settings.company = {lng:113.1225, lat:23.0215};
+    save();
+  }
+  function hasDemo(){ return state.flats.some(function(f){return f.demo;}); }
+  /* 从存储重新同步内存状态，避免多标签页/外部改动造成覆盖 */
+  function syncFromStore(){
+    try{
+      var raw2 = localStorage.getItem(STORE_KEY);
+      if(!raw2) return;
+      var s2 = JSON.parse(raw2);
+      if(s2 && Array.isArray(s2.flats)) state.flats = s2.flats;
+      if(s2 && s2.settings && s2.settings.company && s2.settings.company.lng!=null) state.settings.company = s2.settings.company;
+    }catch(e){}
+  }
+  function clearDemo(){
+    syncFromStore();
+    state.flats = state.flats.filter(function(f){return !f.demo;});
+    save(); render(); toast("已清空示例，可以开始记录自己的房子了");
+  }
+  function reloadDemo(){
+    syncFromStore();
+    state.flats = state.flats.filter(function(f){return !f.demo;});
+    demoLoaded = false; injectDemo(); render();
+    toast("示例已重新载入");
+  }
+
   /* ================= 启动 ================= */
   function render(){
     var rt=currentRoute();
     if(rt.view==="edit"){ renderEdit(rt.id); } else { renderList(); }
     window.scrollTo(0,0);
   }
+  if(firstVisit) injectDemo();
   render();
+
+  /* 照片灯箱（全局只绑一次） */
+  $("#lbClose").onclick = closeLightbox;
+  $("#lbPrev").onclick = function(){ lbState.idx = (lbState.idx-1+lbState.ids.length)%lbState.ids.length; showLightbox(); };
+  $("#lbNext").onclick = function(){ lbState.idx = (lbState.idx+1)%lbState.ids.length; showLightbox(); };
+  $("#lightbox").addEventListener("click", function(e){ if(e.target===this) closeLightbox(); });
+  document.addEventListener("keydown", function(e){
+    if(!$("#lightbox").classList.contains("open")) return;
+    if(e.key==="Escape") closeLightbox();
+    else if(e.key==="ArrowLeft") $("#lbPrev").click();
+    else if(e.key==="ArrowRight") $("#lbNext").click();
+  });
 })();
 </script>
 </body>
